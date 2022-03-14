@@ -1,0 +1,206 @@
+---
+title: "Ark spectra"
+author: "Justin Pomeranz"
+date: "12/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+```
+
+
+```{r, echo=FALSE}
+dw <- readRDS('ark_dw.RDS')
+```
+
+## Overview
+
+Preliminary analyses for Arkansas Size Spectra project
+
+Not shown: stitching all of the CSVs together, adding length-weight regression coefficients and estimating dry weight (dw) measurements
+
+```{r}
+head(dw)
+```
+
+## "Bin" the data based on body size
+
+
+```{r, echo=FALSE}
+bin_and_center <- function(data, var, breaks, ...){
+  
+  # data is a data frame
+  # var is a string, and is the name of a column in data which you want to bin
+  # breaks controls the number of bins as defined in hist(). Can be a vector giving breakpoints of bins [i.e. Log10 breaks = 10^seq(min, max)], a single number designating number of bins, etc. See ?hist for details. If not supplied by the user a default of log2 width bins are calculated 
+  
+  # are breaks supplied by the user?
+  if(exists("breaks") == FALSE){
+    
+    # calculate log2 width bins which are inclusive of the range of data supplied
+    breaks = 2^seq(floor(range(log2(data[[var]]))[1]),
+                   ceiling(range(log2(data[[var]]))[2]))
+    message("breaks not supplied, using log2 width bins")
+  }
+  
+  # bin values using hist()
+  binned_hist = hist(data[[var]], 
+                     breaks = breaks,
+                     include.lowest = TRUE, plot = FALSE)
+  # calculate "left" and "right" edge of bins
+  breaks_orig = binned_hist$breaks[1:(length(breaks)-1)]
+  breaks_offset = binned_hist$breaks[2:length(breaks)]
+  # total bin width = right edge - left edge
+  bin_width = breaks_offset - breaks_orig
+  count = binned_hist$counts
+  log_mids = log10(binned_hist$mids)
+  biomass = count * 10**log_mids
+  nbiomass = log10(biomass / bin_width)
+  dataout = data.frame(
+    count = count,
+    log_count = log10(count),
+    # normalize counts =count / width (White et al 1997)
+    log_count_corrected = log10(count / bin_width),
+    # original midpoint of bin log10 transformed
+    log_mids = log_mids,
+    bin_width = bin_width,
+    biomass = biomass,
+    nbiomass = nbiomass)
+  # remove bins with 0 counts
+  # -Inf comes from log10(count / break_width) above
+  dataout = dataout[dataout$log_count_corrected !=-Inf,]
+  # recenter data at x=0
+  mid_row = ceiling(nrow(dataout)/2)
+  # subtract value of mid row from all mids
+  dataout$log_mids_center =
+    dataout[,"log_mids"] - dataout[mid_row,"log_mids"]
+  dataout
+}
+
+breaks = 2^seq(floor(range(log2(dw$dw))[1]),
+               ceiling(range(log2(dw$dw))[2]))
+bin <- dw %>%
+  group_by(site) %>%
+  # create list-column
+  nest() %>% 
+  # estimate b and 95% CI
+  mutate(bin = map(data, bin_and_center, var = "dw", breaks = breaks)) %>%
+  unnest(cols = bin)
+```
+
+### Size spectra
+
+```{r, echo = FALSE, message=FALSE}
+ggplot(bin, 
+       aes(x = log_mids, y = log_count_corrected, color = site))+
+  geom_point() +
+  stat_smooth(method = "lm", alpha = 0.2) +
+  theme_bw() +
+  labs(title = "Linear regression",
+       subtitle = "combining all reps")
+
+lm_mod <- lm(log_count_corrected ~ log_mids_center*site, data = bin)
+```
+This looks really good! I'm surprised that the slopes are so similar, but this is pretty much exactly what we would expect size spectra relationships to look like. 
+
+## Stats for above plot
+We can look at the values of the size spectra by running a simple linear regression
+
+```{r}
+summary(lm_mod)
+```
+
+This is showing us that there is no difference between the two sites. As I said, this is surprising to me, but this is still a pretty incredible result; the aquatic communities here have similar biomass structures, despite profound (?) differences in community composition and chemical attributes. 
+
+## Other analyses
+
+Because we are looking at a "small" range of body sizes (i.e., only macroinvertebrates), it is recommended to fit quadratic relationships and compare the explanatory power:
+```{r, echo = FALSE, message=FALSE}
+ggplot(bin, 
+       aes(x = log_mids, y = log_count_corrected, color = site))+
+  geom_point() +
+  stat_smooth(method = "lm", alpha = 0.2, formula = y ~ x + I(x^2)) +
+  theme_bw()+
+  labs(title = "Quadratic regression",
+       subtitle = "combining all reps")
+
+quad_mod <- lm(log_count_corrected ~ log_mids_center*site+I(log_mids_center^2), data = bin)
+```
+
+```{r}
+summary(quad_mod)
+```
+
+There is still no difference between the two sites, but it does look like the quadratic term explains a lot of the variation and will likely be important to include. 
+
+## Including variation between reps
+
+The results shown above are combining all of the reps (surbers) together, essentially giving us one estimate of the community composition per site. 
+
+Interestingly, when I bin the data separately within each rep and use these to estimate the size spectra we get slightly different results for both the linear and the quadratic analysis:
+
+```{r, echo=FALSE, message=FALSE}
+bin <- dw %>%
+  group_by(site, rep) %>%
+  # create list-column
+  nest() %>% 
+  # estimate b and 95% CI
+  mutate(bin = map(data, bin_and_center, var = "dw", breaks = breaks)) %>%
+  unnest(cols = bin)
+
+
+ggplot(bin, 
+       aes(x = log_mids, y = log_count_corrected, color = site))+
+  geom_point(aes(shape = rep)) +
+  stat_smooth(method = "lm", alpha = 0.2) +
+  theme_bw()+
+  labs(title = "Linear regression",
+       subtitle = "separate reps")
+
+
+ggplot(bin, 
+       aes(x = log_mids, y = log_count_corrected, color = site))+
+  geom_point(aes(shape = rep)) +
+  stat_smooth(method = "lm", alpha = 0.2, formula = y ~ x + I(x^2)) +
+  theme_bw()+
+  labs(title = "Quadratic regression",
+       subtitle = "separate reps")
+
+rep.lm <- lm(log_count_corrected ~ log_mids_center*site, data = bin)
+rep.quad <- lm(log_count_corrected ~ log_mids_center*site+I(log_mids_center^2), data = bin)
+```
+
+```{r}
+summary(rep.lm)
+summary(rep.quad)
+```
+
+The slopes still do not seem to vary between the two sites, but in this case it looks like the intercepts do vary between the two sites. The intercept is commonly interpreted as "total community abundance". In other words, there are more individual bugs at AR1 than AR3. I'll leave it to Will to confirm this result, but this makes intuitive sense to me; lower overall abundance/biomass at the impacted site. 
+
+## So which analysis?
+
+Great question, and the short answer is: I don't know! There is actually a bit of an open question on whether or not size spectra are best estimated by combining all the data (first results above) or using different samples (surbers) to estimate the relationship. 
+
+## next samples?
+
+This might be worth having a meeting to discuss. 
+
+### season?
+One question I have beforehand is wich season were these samples from? Spring or summer? 
+-- One option would be to try other seasons from this same year to see if there are seasonal differences. My instinct is that Spring would have the greatest differences, but I could be wrong, especially if spring samples are pre-runoff. 
+
+### AR1 impacts?
+Also, I believe Will said that AR1 might have also been impacted at the beginning of the study; are these samples after the restoration of LMDT occured? Are there samples of AR1 post-LMDT restoration but pre-CA gulch restoration? 
+-- Sampling in this "window" might reveal greater differences between the two sites
+
+### longitudinal effects?
+Impacts lower down at AR4 or 5? I don't think this is likely, but the longitudinal effects may be more pronounced i.e., AR3 might be close enough to the unimpacted sites that individuals are drifting down and inflating the size spectra relationship
+
+### Post restoration samples
+Despite there not being profound differences pre-restoration, I still think that it would be a good idea to process some post-retoration sites from more recent years, 2018 or 19?
+-- One thing we may need to figure out is if/how the subsampling routine affects estimates of size spectra. This might be possible using analytical techniques (i.e. me playing around with the data you already sent), or require a more robust pilot study (i.e., process the subsampled invertebrates, then complete a full-pick of the remaining sample which was not subsampled)
+
+### ID to genus?
+One thing I just thought of is that IDing everything to family may not be sensitive enough to detect differences. I think this is unlikely, and I could probably look at some of my old data to see if the taxonomic level makes a difference, but I mention it here for reference. 
