@@ -2,15 +2,19 @@
 
 library(tidyverse)
 
+# read in data made in first script
 dat <- readRDS("data/ark_csv_stitched.R")
 
+# read in csv with length weight equations
 lw_coef <- read.csv("data/LW_coeffs.csv")
 
+# which taxa don't have lw coefs?
 no_coef <- setdiff(unique(dat$Label), unique(lw_coef$taxon))
 
+# percent of data that has lw coeffs?
 nrow(dat[dat$Label %in% no_coef,])/ nrow(dat)
 
-
+# make string vector of column names we care about
 lw_cols <- c("taxon",
              "a",
              "b",
@@ -25,19 +29,25 @@ equations %>%
   select(lw_cols) %>% View
 
 
+# I think this is old? 
+# commenting out for now
+# dat2 <- merge(dat2, lw_coef[,lw_cols], 
+#       by.x = "Label",
+#       by.y = "taxon", all.x = TRUE)
 
-dat2 <- merge(dat2, lw_coef[,lw_cols], 
-      by.x = "Label",
-      by.y = "taxon", all.x = TRUE)
-
+# join the ark data with lw coef values
 fulldat <- merge(dat, lw_coef[,lw_cols], 
                  by.x = "Label",
                  by.y = "taxon", all.x = FALSE)
+
+# dimensions of the ark and merged data
 dim(dat)
 dim(fulldat)
 
+# different lw formulas
 unique(fulldat$formula_type)
 
+# estimate dw based on formula type
 fulldat <- fulldat %>% 
   mutate(dw = case_when(
     formula_type == 1 ~ a * Value^b,
@@ -45,18 +55,22 @@ fulldat <- fulldat %>%
 
 dim(fulldat)
 
+# remove any dry weight values < or = to 0
 dw <- fulldat %>%
   filter(dw >0) %>%
   select(file, dw)
+
 dim(dw)
 names(dw)
+
+# pull out info from "file" column to site, date, rep (surber sample), etc.
 dw <- dw %>%
   separate(file, into = "site", sep = 6, remove = TRUE)
 
 dw <- dw %>%
   separate(site, into = c("site","rep"), sep = "_", remove = FALSE)
 
-
+# this is a custom written function which estimates normalized size spectra using log2 width bins
 bin_and_center <- function(data, var, breaks, ...){
   
   # data is a data frame
@@ -106,31 +120,40 @@ bin_and_center <- function(data, var, breaks, ...){
   dataout
 }
 
+# filter out data < or = 0.0026 mg
+# See SI from Perkins et al. 2018 Ecology Letters
 dw <- dw %>%
   filter(dw>0.0026)
 
-
+# define break widths
+# this code is for log2 width bins
 breaks = 2^seq(floor(range(log2(dw$dw))[1]),
                ceiling(range(log2(dw$dw))[2]))
 
 min(dw$dw)
 
-
+# save data with estimated dry weights
 saveRDS(dw, "data/ark_dw.RDS")
 
+# split data into 2 sites before estimating size spectra
+# need to fix function to do this automatically
 dw_ar1 <- dw %>%
   filter(site == "AR1")
 
 dw_ar3 <- dw %>%
   filter(site == "AR3")
 
+# estimate spectra for each site independently
 bin_ar1 <- bin_and_center(dw_ar1, "dw", breaks = breaks)
 bin_ar3 <- bin_and_center(dw_ar3, "dw", breaks = breaks)
 
 bin_ar1$site <- "AR1"
 bin_ar3$site <- "AR3"
 
+# put two sites back together
 bin <- bind_rows(bin_ar1, bin_ar3)
+
+# plot size spectra results
 ggplot(bin, aes(x = log_mids, y = log_count_corrected, color = site))+
   geom_point() +
   stat_smooth(method = "lm")
@@ -139,6 +162,7 @@ ggplot(bin, aes(x = log_mids_center, y = log_count_corrected, color = site))+
   geom_point() +
   stat_smooth(method = "lm")
 
+# prelimanary statistics
 spectra <- lm(log_count_corrected ~ log_mids_center * site, data = bin)
 summary(spectra)
 
@@ -155,6 +179,9 @@ summary(lm(log_count_corrected ~ log_mids*site + I(log_mids^2), data = bin))
         
 quad_mod <- lm(log_count_corrected ~ log_mids*site + I(log_mids^2), data = bin)
 
+
+# code below this is preliminary and exploratory, I wouldn't worry about it too much for now. 
+
 newdata <- bin %>% 
   select(site, log_mids_center,
          log_count_corrected, log_mids)
@@ -164,7 +191,7 @@ newdata <- cbind(newdata,
                          newdata,
                          interval = "predict"))
 
-# figure 2 in MS ####
+# figure with "predicted" data
 ggplot(bin, aes(y = log_count_corrected, x = log_mids)) + 
   labs(x = expression(Log[10]~M), y = expression(Log[10]~N)) +
   geom_point(size = 0.7) +
