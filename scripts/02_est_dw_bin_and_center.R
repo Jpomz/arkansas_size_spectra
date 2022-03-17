@@ -65,10 +65,15 @@ names(dw)
 
 # pull out info from "file" column to site, date, rep (surber sample), etc.
 dw <- dw %>%
-  separate(file, into = "site", sep = 6, remove = TRUE)
-
+  separate(file, into = c("site", "rep", "date", "photo"), sep="_")
+# separate date into day month and year
 dw <- dw %>%
-  separate(site, into = c("site","rep"), sep = "_", remove = FALSE)
+  separate(date, into = c("day", "month", "year"), sep="-")
+
+# fix "1900" dates to 1990
+dw <- dw %>%
+  mutate(year = case_when(year == 1900 ~ 1990,
+                          TRUE ~ as.numeric(year)))
 
 # this is a custom written function which estimates normalized size spectra using log2 width bins
 bin_and_center <- function(data, var, breaks, ...){
@@ -134,6 +139,29 @@ min(dw$dw)
 
 # save data with estimated dry weights
 saveRDS(dw, "data/ark_dw.RDS")
+
+dw_bin <- dw %>%
+  group_by(site, year) %>%
+  select(dw) %>%
+  nest(size_data = dw) %>%
+  mutate(bin = map(size_data,
+                   bin_and_center,
+                   "dw",
+                   breaks = breaks)) %>%
+  unnest(cols = bin) %>%
+  select(-size_data) %>%
+  ungroup()
+
+ggplot(dw_bin,
+       aes(x = log_mids_center,
+           y = log_count_corrected,
+           color = as.factor(year), 
+           shape = site)) +
+  geom_point()
+
+
+
+# old split data ####
 
 # split data into 2 sites before estimating size spectra
 # need to fix function to do this automatically
