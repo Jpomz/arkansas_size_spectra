@@ -9,6 +9,11 @@ filename <- list.files(upperDir)
 
 
 #### Loop Reading in csv's ####
+
+# note, as of 4/17/22, this dataset is getting large
+# Takes a while to read it all in
+# hopefully don't need to repeat this, or could optimize it if needed later. 
+
 dataset <- NULL #Empty dataset
 
 for (i in 1:length(meas)){ 
@@ -29,8 +34,6 @@ for (i in 1:length(meas)){
 names(dataset)
 
 dim(dataset)
-# are all the rows "complete"? i.e. missing data values?
-#complete.cases(dataset)
 
 # preview the first 5 rows of the data
 dataset[1:5,1:4]
