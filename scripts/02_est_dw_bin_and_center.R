@@ -14,6 +14,7 @@ no_coef <- setdiff(unique(dat$Label), unique(lw_coef$taxon))
 
 # percent of data that has lw coeffs?
 (nrow(dat[dat$Label %in% no_coef,])/ nrow(dat))*100
+# ~ 9% no lw [4/17/22]
 
 # make string vector of column names we care about
 lw_cols <- c("taxon",
@@ -26,8 +27,6 @@ lw_cols <- c("taxon",
 
 # check formulas in LW for taxa in arkansas
 equations <- lw_coef[lw_coef$taxon %in% unique(dat$Label),]
-equations %>%
-  select(lw_cols) %>% View
 
 
 # I think this is old? 
@@ -79,9 +78,6 @@ dw <- dw %>%
   mutate(year = case_when(year == 1900 ~ 1990,
                           TRUE ~ as.numeric(year)))
 
-### THIS IS NOT DONE YET ####
-# dw <- dw %>%
-#   separate(file, into = c("year"), sep = c(13,18), remove = FALSE)
 
 # bin function ####
 
@@ -140,15 +136,18 @@ bin_and_center <- function(data, var, breaks, ...){
 dw <- dw %>%
   filter(dw>0.0026)
 
-# define break widths
-# this code is for log2 width bins
-breaks = 2^seq(floor(range(log2(dw$dw))[1]),
-               ceiling(range(log2(dw$dw))[2]))
-
 min(dw$dw)
 
 # save data with estimated dry weights
 saveRDS(dw, "data/ark_dw.RDS")
+
+
+# bin and center data #### 
+
+# define break widths
+# this code is for log2 width bins
+breaks = 2^seq(floor(range(log2(dw$dw))[1]),
+               ceiling(range(log2(dw$dw))[2]))
 
 dw_bin <- dw %>%
   group_by(site, year) %>%
@@ -167,141 +166,188 @@ ggplot(dw_bin,
            y = log_count_corrected,
            color = as.factor(year), 
            shape = site)) +
-  geom_point()
+  geom_point() +
+  geom_smooth(
+    #aes(group = interaction(site, year)),
+    method = "lm",
+    se = FALSE) +
+  facet_wrap(.~site)
 
-
-
-# old split data ####
-
-# split data into 2 sites before estimating size spectra
-# need to fix function to do this automatically
-dw_ar1 <- dw %>%
-  filter(site == "AR1")
-
-dw_ar3 <- dw %>%
-  filter(site == "AR3")
-
-# estimate spectra for each site independently
-bin_ar1 <- bin_and_center(dw_ar1, "dw", breaks = breaks)
-bin_ar3 <- bin_and_center(dw_ar3, "dw", breaks = breaks)
-
-bin_ar1$site <- "AR1"
-bin_ar3$site <- "AR3"
-
-# put two sites back together
-bin <- bind_rows(bin_ar1, bin_ar3)
-
-# plot size spectra results
-ggplot(bin, 
+ggplot(dw_bin,
        aes(x = log_mids,
            y = log_count_corrected,
-           color = site))+
+           color = as.factor(year), 
+           shape = site)) +
   geom_point() +
-  stat_smooth(method = "lm")
+  geom_smooth(
+    #aes(group = interaction(site, year)),
+    method = "lm",
+    se = FALSE) +
+  facet_wrap(.~site)
 
-ggplot(bin, aes(x = log_mids_center, y = log_count_corrected, color = site))+
+dw_bin %>%
+  filter(log_mids_center >-1.50) %>%
+ggplot(aes(x = log_mids_center,
+           y = log_count_corrected,
+           color = as.factor(year), 
+           shape = site)) +
   geom_point() +
-  stat_smooth(method = "lm")
-
-# prelimanary statistics
-spectra <- lm(log_count_corrected ~ log_mids_center * site,
-              data = bin)
-
-summary(spectra)
+  geom_smooth(
+    #aes(group = interaction(site, year)),
+    method = "lm",
+    se = FALSE) +
+  facet_wrap(.~site)
 
 
-summary(lm(log_count_corrected ~ log_mids_center,
-           data = bin_ar1))
+# preliminary statistics
+dw_bin <- dw_bin %>%
+  mutate(y_fact = factor(year, 
+                            levels = c("1990", "2012", "2019")))
 
-summary(lm(log_count_corrected ~ log_mids_center,
-           data = bin_ar3))
+# summary(lm(log_count_corrected ~ log_mids_center + site*y_fact, data = dw_bin))
+# 
+# summary(lm(log_count_corrected ~ log_mids_center*site, data = dw_bin))
+# 
+# summary(lm(log_count_corrected ~ log_mids_center+site, data = dw_bin))
+# 
+# summary(lm(log_count_corrected ~ log_mids_center*y_fact, data = dw_bin))
+# 
+# summary(lm(log_count_corrected ~ log_mids_center+y_fact, data = dw_bin))
+# 
+# summary(lm(log_count_corrected ~ log_mids_center, data = dw_bin))
 
 
-summary(lm(log_count_corrected ~ log_mids*site,
-           data = bin))
-summary(lm(log_count_corrected ~ log_mids+site,
-           data = bin))
+dw_bin %>%
+  group_by(site, y_fact) %>%
+  mutate(id = cur_group_id()) %>%
+  select(id, site, y_fact) %>%
+  arrange(id) %>%
+  unique()
+
+dw_bin %>%
+  group_by(site, year) %>%
+  mutate(id = cur_group_id()) %>%
+  #filter(log_mids_center >-1.50) %>%
+  lm(log_count_corrected ~ log_mids_center:as.factor(id), data = .) %>% summary()
+
+mod2 <- dw_bin %>%
+  group_by(site, year) %>%
+  mutate(id = cur_group_id()) %>%
+  #filter(log_mids_center >-1.50) %>%
+  lm(log_count_corrected ~ log_mids_center:as.factor(id), data = .) 
+
+dw_bin %>%
+  lm(log_count_corrected ~ log_mids_center+(log_mids_center:site:y_fact) , data = .) %>% summary()
+
+mod1 <- dw_bin %>%
+  filter(log_mids_center >-1.50) %>%
+  lm(log_count_corrected ~ log_mids_center +
+       #site + 
+       #y_fact + 
+       log_mids_center:site + 
+       log_mids_center:y_fact + 
+       log_mids_center:site:y_fact +
+       NULL,
+     data = .) #%>% summary()
+
+# dw_bin %>%
+#   filter(log_mids_center >-1.50) %>%
+#   lm(log_count_corrected ~ log_mids_center*site, data = .)%>% summary()
+# 
+# dw_bin %>%
+#   filter(log_mids_center >-1.50) %>%
+#   lm(log_count_corrected ~ log_mids_center+site, data = .)%>% summary()
+# 
+# dw_bin %>%
+#   filter(log_mids_center >-1.50) %>%
+#   lm(log_count_corrected ~ log_mids_center*y_fact, data = .)%>% summary()
+# 
+# dw_bin %>%
+#   filter(log_mids_center >-1.50) %>%
+#   lm(log_count_corrected ~ log_mids_center+y_fact, data = .)%>% summary()
+# 
+# dw_bin %>%
+#   filter(log_mids_center >-1.50) %>%
+#   lm(log_count_corrected ~ log_mids_center, data = .)%>% summary()
+  
 
 
-summary(lm(log_count_corrected ~ log_mids*site + I(log_mids^2), data = bin))
+# mod1 <- dw_bin %>%
+#   filter(log_mids_center >-1.50) %>%
+#   lm(log_count_corrected ~ log_mids_center + site*y_fact, data = .) 
 
-        
-quad_mod <- lm(log_count_corrected ~ log_mids*site + I(log_mids^2), data = bin)
-
-
-# code below this is preliminary and exploratory, I wouldn't worry about it too much for now. 
-
-newdata <- bin %>% 
-  select(site, log_mids_center,
-         log_count_corrected, log_mids)
+# plot model fit
+newdata <- dw_bin %>% 
+  #filter(log_mids_center >-1.50) %>%
+  select(site, y_fact, log_mids_center,
+         log_count_corrected)
 
 newdata <- cbind(newdata,
-                 predict(quad_mod,
+                 predict(mod1,
                          newdata,
                          interval = "predict"))
 
 # figure with "predicted" data
-ggplot(bin, aes(y = log_count_corrected, x = log_mids)) + 
-  labs(x = expression(Log[10]~M), y = expression(Log[10]~N)) +
+dw_bin %>% 
+  filter(log_mids_center >-1.50) %>%
+  ggplot(
+       aes(y = log_count_corrected,
+           x = log_mids_center,
+           color = y_fact)) + 
+  labs(x = expression(Log[10]~M),
+       y = expression(Log[10]~N)) +
   geom_point(size = 0.7) +
-  geom_line(data = newdata, aes(y=fit, x = log_mids, group = site), 
+  geom_line(data = newdata,
+            aes(y=fit,
+                x = log_mids_center,
+                group = interaction(site, y_fact),
+                color = y_fact), 
             size = 0.5) +
-  geom_ribbon(data = newdata, aes(ymin = lwr, ymax = upr, group = site), alpha = 0.2) +
+  geom_ribbon(data = newdata,
+              aes(ymin = lwr,
+                  ymax = upr,
+                  group = interaction(site, y_fact),
+                  fill = y_fact),
+              alpha = 0.1) +
   theme_classic() +
-  theme(legend.position = "none",
-        strip.text.x = element_text(size = 8, margin = margin(.09, 0, .09, 0, "cm"))) 
+  theme(
+        strip.text.x = element_text(size = 8, margin = margin(.09, 0, .09, 0, "cm"))) +
+  facet_wrap(.~site)
 
 
+newdata2 <- dw_bin %>% 
+  group_by(site, y_fact) %>%
+  mutate(id = cur_group_id(),
+         id = factor(id, levels = c(1, 2, 3, 4, 5, 6))) %>%
+  select(site, y_fact, log_mids_center,
+         log_count_corrected, id) %>%
+  ungroup()
 
-
-
-rep.dw <- dw %>%
-  group_by(site, rep) %>%
-  # create list-column
-  nest() %>% 
-  # estimate b and 95% CI
-  mutate(bin = map(data, bin_and_center, var = "dw", breaks = breaks)) %>%
-  unnest(cols = bin)
-
-ggplot(rep.dw, 
-       aes(x = log_mids, y = log_count_corrected, color = site))+
-  geom_point(aes(shape = rep)) +
-  stat_smooth(method = "lm", aes())
-
-summary(lm(log_count_corrected ~ log_mids_center *site, data = rep.dw))
-
-summary(lm(log_count_corrected ~ log_mids_center *site +I(log_mids_center^2), data = rep.dw))
-
-ggplot(rep.dw, 
-       aes(x = log_mids, y = log_count_corrected, color = site))+
-  geom_point(aes(shape = rep)) +
-  stat_smooth(method = "lm", formula = y ~ x + I(x^2))
-
-
-fulldat %>%
-  separate(file, into = "site", sep = 3, remove = TRUE) %>%
-  group_by(site, Label) %>%
-  summarise(sp.dw = mean(dw),
-            n.sp = n()) %>%
-  ggplot(aes(x = sp.dw, y = n.sp, color = site)) +
-  geom_point()+
-  scale_x_log10() +
-  scale_y_log10() +
-  stat_smooth(method = "lm")
-
-
-
-breaks_log_6 <- exp(seq(floor(log(min(dw$dw))),
-                        ceiling(log(max(dw$dw))),
-                        length.out = 7))
-
-dw %>%
-  group_by(site, rep) %>%
-  # create list-column
-  nest() %>% 
-  # estimate b and 95% CI
-  mutate(bin = map(data, bin_and_center, var = "dw", breaks = breaks_log_6)) %>%
-  unnest(cols = bin) %>%
-  ggplot(aes(x = log_mids_center, y = log_count_corrected, color = site))+
-  geom_point(aes(shape = rep)) +
-  stat_smooth(method = "lm")
+newdata2 <- cbind(newdata,
+                 predict(mod2,
+                         newdata,
+                         interval = "predict"))
+dw_bin %>% 
+  ggplot(
+    aes(y = log_count_corrected,
+        x = log_mids_center,
+        color = y_fact)) + 
+  labs(x = expression(Log[10]~M),
+       y = expression(Log[10]~N)) +
+  geom_point(size = 0.7) +
+  geom_line(data = newdata2,
+            aes(y=fit,
+                x = log_mids_center,
+                group = interaction(site, y_fact),
+                color = y_fact), 
+            size = 0.5) +
+  geom_ribbon(data = newdata2,
+              aes(ymin = lwr,
+                  ymax = upr,
+                  group = interaction(site, y_fact),
+                  fill = y_fact),
+              alpha = 0.1) +
+  theme_classic() +
+  theme(
+    strip.text.x = element_text(size = 8, margin = margin(.09, 0, .09, 0, "cm"))) +
+  facet_wrap(.~site)

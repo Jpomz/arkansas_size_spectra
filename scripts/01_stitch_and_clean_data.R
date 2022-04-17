@@ -83,6 +83,16 @@ dataset$Label <- gsub(
   x = dataset$Label)
 
 dataset$Label <- gsub(
+  pattern = "Flat Worm",
+  replacement = "Planariidae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Flat_Worm",
+  replacement = "Planariidae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
   pattern = "Flatworm",
   replacement = "Planariidae",
   x = dataset$Label)
@@ -90,6 +100,47 @@ dataset$Label <- gsub(
 dataset$Label <- gsub(
   pattern = "Hydrachnidae",
   replacement = "Acari",
+  x = dataset$Label)
+
+# 2012
+dataset$Label <- gsub(
+  pattern = "Blepharicid",
+  replacement = "Blephariceridae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Ceratropgonidae",
+  replacement = "Ceratopogonidae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Emphididae",
+  replacement = "Empididae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Glossomatidae",
+  replacement = "Glossosomatidae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Heptagenidae",
+  replacement = "Heptageniidae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Rhyancophilidae",
+  replacement = "Rhyacophilidae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Uenoidea",
+  replacement = "Uenoidae",
+  x = dataset$Label)
+
+dataset$Label <- gsub(
+  pattern = "Simulidae",
+  replacement = "Simuliidae",
   x = dataset$Label)
 
 # check the updated dataset
@@ -104,6 +155,10 @@ dataset[dataset$Label=="",]
 nrow(dataset[dataset$Label=="Chironomidae(adult)",]) + 
   nrow(dataset[dataset$Label=="Chironomidae_(adult)",])
 # 24
+
+# horse hair worms, how many?
+nrow(dataset[dataset$Label=="Nematomorpha",])
+
 
 # Elmidae adults, how many?
 nrow(dataset[dataset$Label=="Elmidae (adult)",]) + 
