@@ -215,7 +215,18 @@ dw_bin <- dw_bin %>%
 # summary(lm(log_count_corrected ~ log_mids_center+y_fact, data = dw_bin))
 # 
 # summary(lm(log_count_corrected ~ log_mids_center, data = dw_bin))
+dw_bin %>%
+  lm(
+    log_count_corrected ~log_mids_center:site:y_fact,
+    data = .) %>%
+  summary()
 
+dw_bin %>%
+  filter(log_mids_center >-1.50) %>%
+  lm(
+    log_count_corrected ~log_mids_center:site:y_fact,
+    data = .) %>%
+  summary()
 
 dw_bin %>%
   group_by(site, y_fact) %>%

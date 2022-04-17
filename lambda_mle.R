@@ -87,7 +87,7 @@ mle_lambda %>%
              ymax = maxCI,
              x = y_fact,
              color = site)) +
-  geom_pointrange() +
+  geom_pointrange(size = 1) +
   theme_bw() +
   labs(y = expression(lambda),
        x = "year")
@@ -120,7 +120,7 @@ dat %>%
              ymax = maxCI,
              x = y_fact,
              color = site)) +
-  geom_pointrange() +
+  geom_pointrange(size = 1) +
   theme_bw() +
   labs(y = expression(lambda),
        x = "year")
