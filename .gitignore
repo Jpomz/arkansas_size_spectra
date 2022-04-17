@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-.zip
+*.zip
 data/2012Ark_Size_Spectra/
 data/Ark_Size_Spectra_2019/
 data/raw_csv/
