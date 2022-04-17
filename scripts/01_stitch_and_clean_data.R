@@ -2,7 +2,7 @@
 
 upperDir <- "data/raw_csv" 
 # vector of all of the paths to csv's within folder
-meas <- list.files(upperDir, full.names=T) 
+meas <- list.files(upperDir, full.names=TRUE) 
 # just the file name of each csv
 filename <- list.files(upperDir) 
 
@@ -27,13 +27,17 @@ for (i in 1:length(meas)){
 
 # column names of dataset we just stitched together
 names(dataset)
+
+dim(dataset)
 # are all the rows "complete"? i.e. missing data values?
-complete.cases(dataset)
+#complete.cases(dataset)
 
 # preview the first 5 rows of the data
 dataset[1:5,1:4]
+
 # look at all of the Unit values - make sure they're all mm
 unique(dataset$Unit)
+
 # look at all of the taxa names in the data
 # taxa names are in the "Label" column
 sort(unique(dataset$Label))
@@ -88,6 +92,25 @@ dataset$Label <- gsub(
 # check the updated dataset
 # make sure taxa names are correct
 sort(unique(dataset$Label))
+
+# check some things out
+# No label
+dataset[dataset$Label=="",]
+
+# chironomidae adults, how many?
+nrow(dataset[dataset$Label=="Chironomidae(adult)",]) + 
+  nrow(dataset[dataset$Label=="Chironomidae_(adult)",])
+# 24
+
+# Elmidae adults, how many?
+nrow(dataset[dataset$Label=="Elmidae (adult)",]) + 
+  nrow(dataset[dataset$Label=="Elmidae_Adult",])
+# 6
+
+# Elmidae adults, how many?
+nrow(dataset[dataset$Label=="Perlidae(adult)",])
+# 1
+
 
 # save the data set for further analysis
 saveRDS(dataset, "data/ark_csv_stitched.R")

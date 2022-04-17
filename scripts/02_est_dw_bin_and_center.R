@@ -1,5 +1,6 @@
 # appends LW coeffs
 
+# library ####
 library(tidyverse)
 
 # read in data made in first script
@@ -12,7 +13,7 @@ lw_coef <- read.csv("data/LW_coeffs.csv")
 no_coef <- setdiff(unique(dat$Label), unique(lw_coef$taxon))
 
 # percent of data that has lw coeffs?
-nrow(dat[dat$Label %in% no_coef,])/ nrow(dat)
+(nrow(dat[dat$Label %in% no_coef,])/ nrow(dat))*100
 
 # make string vector of column names we care about
 lw_cols <- c("taxon",
@@ -63,12 +64,20 @@ dw <- fulldat %>%
 dim(dw)
 names(dw)
 
+
+### need to also pull out year infor
 # pull out info from "file" column to site, date, rep (surber sample), etc.
 dw <- dw %>%
-  separate(file, into = "site", sep = 6, remove = TRUE)
+  separate(file, into = "site", sep = 6, remove = FALSE)
 
 dw <- dw %>%
   separate(site, into = c("site","rep"), sep = "_", remove = FALSE)
+
+### THIS IS NOT DONE YET ####
+# dw <- dw %>%
+#   separate(file, into = c("year"), sep = c(13,18), remove = FALSE)
+
+# bin function ####
 
 # this is a custom written function which estimates normalized size spectra using log2 width bins
 bin_and_center <- function(data, var, breaks, ...){
@@ -154,7 +163,10 @@ bin_ar3$site <- "AR3"
 bin <- bind_rows(bin_ar1, bin_ar3)
 
 # plot size spectra results
-ggplot(bin, aes(x = log_mids, y = log_count_corrected, color = site))+
+ggplot(bin, 
+       aes(x = log_mids,
+           y = log_count_corrected,
+           color = site))+
   geom_point() +
   stat_smooth(method = "lm")
 
@@ -163,15 +175,23 @@ ggplot(bin, aes(x = log_mids_center, y = log_count_corrected, color = site))+
   stat_smooth(method = "lm")
 
 # prelimanary statistics
-spectra <- lm(log_count_corrected ~ log_mids_center * site, data = bin)
+spectra <- lm(log_count_corrected ~ log_mids_center * site,
+              data = bin)
+
 summary(spectra)
 
-summary(lm(log_count_corrected ~ log_mids_center, data = bin_ar1))
-summary(lm(log_count_corrected ~ log_mids_center, data = bin_ar3))
+
+summary(lm(log_count_corrected ~ log_mids_center,
+           data = bin_ar1))
+
+summary(lm(log_count_corrected ~ log_mids_center,
+           data = bin_ar3))
 
 
-summary(lm(log_count_corrected ~ log_mids*site, data = bin))
-summary(lm(log_count_corrected ~ log_mids+site, data = bin))
+summary(lm(log_count_corrected ~ log_mids*site,
+           data = bin))
+summary(lm(log_count_corrected ~ log_mids+site,
+           data = bin))
 
 
 summary(lm(log_count_corrected ~ log_mids*site + I(log_mids^2), data = bin))
