@@ -100,12 +100,12 @@ ggline(mle_lambda,
 
 
 dat %>%
-  filter(dw >0.0208) %>%
+  filter(dw >0.0052) %>%
   group_by(site, y_fact) %>%
-  count()
+  count() 
 
 dat %>%
-  filter(dw >0.0208) %>%
+  filter(dw >0.0052) %>%
   group_by(site, y_fact) %>%
   nest() %>%
   mutate(lambda = map(data,
@@ -124,3 +124,23 @@ dat %>%
   theme_bw() +
   labs(y = expression(lambda),
        x = "year")
+
+dat %>%
+  filter(dw >0.0026) %>%
+  group_by(site, rep, y_fact) %>%
+  count()%>%
+  View
+
+dat %>%
+  filter(dw >0.0026) %>%
+  group_by(site, y_fact, rep) %>%
+  nest() %>%
+  mutate(lambda = map(data,
+                      MLE_tidy,
+                      "dw")) %>%
+  unnest(cols = lambda) %>%
+  select(-data) %>%
+  ungroup() %>%
+  group_by(site, y_fact) %>%
+  summarise(mean_b = mean(b),
+            sd(b))
