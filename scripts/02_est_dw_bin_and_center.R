@@ -12,9 +12,33 @@ lw_coef <- read.csv("data/LW_coeffs.csv")
 # which taxa don't have lw coefs?
 no_coef <- setdiff(unique(dat$Label), unique(lw_coef$taxon))
 
+no_coef
+
+# Using surrogate equations for these taxa
+# Morley et al. 2020 Plos One
+# Psychodidae --> Empididae
+# Uenoidae --> Limnephilidae
+# Hydroptilidae --> Rhyacophilidae
+dat$Label <- gsub(
+  pattern = "Psychodidae",
+  replacement = "Empididae",
+  x = dat$Label)
+dat$Label <- gsub(
+  pattern = "Uenoidae",
+  replacement = "Limnephilidae",
+  x = dat$Label)
+dat$Label <- gsub(
+  pattern = "Hydroptilidae",
+  replacement = "Rhyacophilidae",
+  x = dat$Label)
+
+no_coef <- setdiff(unique(dat$Label), unique(lw_coef$taxon))
+
+
 # percent of data that has lw coeffs?
 (nrow(dat[dat$Label %in% no_coef,])/ nrow(dat))*100
 # ~ 9% no lw [4/17/22]
+# ~ 0.06% no lw [4/22/22] --> using surrogates above
 
 # make string vector of column names we care about
 lw_cols <- c("taxon",
@@ -362,3 +386,33 @@ dw_bin %>%
   theme(
     strip.text.x = element_text(size = 8, margin = margin(.09, 0, .09, 0, "cm"))) +
   facet_wrap(.~site)
+
+
+
+# separate regressions
+dw_bin %>%
+  group_by(site, year) %>%
+  nest() %>%
+  mutate(fit = map(data,
+                   ~lm(
+                     log_count_corrected ~
+                       log_mids,
+                     data = .))) %>%
+  gather(name, model, fit) %>%
+  mutate(coefs = map(model, coef)) %>%
+  unnest(coefs) %>%
+  arrange(site, year)
+  
+dw_bin %>%
+  filter(log_mids > -1.5) %>%
+  group_by(site, year) %>%
+  nest() %>%
+  mutate(fit = map(data,
+                   ~lm(
+                     log_count_corrected ~
+                       log_mids_center,
+                     data = .))) %>%
+  gather(name, model, fit) %>%
+  mutate(coefs = map(model, coef)) %>%
+  unnest(coefs) %>%
+  arrange(site, year)
