@@ -62,16 +62,17 @@ dat <- dat %>%
            factor(year,
                   levels = c("1990", "2012", "2019")))
 
+# how many individuals by site and year?
 dat %>%
   filter(dw >0.0026) %>%
   group_by(site, y_fact) %>%
   count()
 
+# how many individuals per sample?
 dat %>%
   filter(dw >0.0026) %>%
   group_by(site, rep, y_fact) %>%
-  count() %>%
-  View()
+  count() 
 
 dat %>%
   filter(dw >0.0026) %>%
@@ -81,7 +82,11 @@ dat %>%
              y = n, 
              color = site,
              shape = rep)) +
-  geom_point()
+  geom_point(
+    position = position_jitter(
+      width = 0.1,
+      height = 0
+    ))
 
 mle_lambda <- dat %>%
   filter(dw >0.0026) %>%
@@ -103,7 +108,11 @@ mle_lambda %>%
              ymax = maxCI,
              x = y_fact,
              color = site)) +
-  geom_pointrange(size = 1) +
+  geom_pointrange(
+    size = 1,
+    position = position_dodge(
+      width = 0.25
+    )) +
   theme_bw() +
   labs(y = expression(lambda),
        x = "year")
@@ -114,11 +123,12 @@ ggline(mle_lambda,
        color = "site", 
        size = 1)
 
-
+# double the minimum filter
 dat %>%
   filter(dw >0.0052) %>%
   group_by(site, y_fact) %>%
   count() 
+# only a handful fewer individuals  
 
 dat %>%
   filter(dw >0.0052) %>%
@@ -144,8 +154,7 @@ dat %>%
 dat %>%
   filter(dw >0.0026) %>%
   group_by(site, rep, y_fact) %>%
-  count()%>%
-  View
+  count()
 
 dat %>%
   filter(dw >0.0026) %>%
