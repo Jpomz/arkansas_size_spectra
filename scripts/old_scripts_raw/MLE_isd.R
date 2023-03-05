@@ -144,33 +144,14 @@ plot_b_est <- function(dat, b, grp_var, ...){
 # load and wrangle data--------------------------------------------------
 
 
-# mean annual temperature provided in NEON site descriptions
-site.info <- read.csv("data/aquatic-field-sites.csv")[,c(2,10)]
-names(site.info) <- c("siteID", "mat.c")
-
-
 # read in estimated dry weight data
-dw <- readRDS("data/macro_dw.RDS") 
+dw <- readRDS("data/ark_dw.RDS") 
 # remove lake and large river sites
-lakes <- c("BARC", "CRAM", "LIRO", "PRLA", "PRPO",
-           "SUGG", "TOOK", "BLWA", "FLNT", "TOMB")
-dw <- dw %>%
-  filter(!siteID %in% lakes)
 
-# modify data structure
-dw <- dw %>%
-  filter(!is.na(dw)) %>%
-  # calculate total count / per m2 for each body size 
-  group_by(siteID, collectDate, dw) %>%
-  summarise(count = sum(no_m2, na.rm = TRUE)) %>%
-  ungroup() %>%
-  # duplicate number of rows based on count
-  #i.e. if count = 10, duplicate that row 10 times
-  uncount(count)
 
-# dw %>% group_by(siteID, collectDate) %>%
-#   summarize(min_dw = min(dw),
-#             max_dw = max(dw)) %>% View
+dw %>% group_by(site) %>%
+  summarize(min_dw = min(dw),
+             max_dw = max(dw))
 
 
 # MLE ---------------------------------------------------------------------
@@ -180,187 +161,24 @@ dw <- dw %>%
 # note, this is running across 18+ million rows of data, it can take a while
 mle.dw <- dw %>%
   #filter(!is.na(dw)) %>%
-  mutate(date = as.Date(collectDate)) %>%
-  group_by(siteID, collectDate) %>%
+  #mutate(date = as.Date(collectDate)) %>%
+  group_by(site) %>%
   # create list-column
   nest() %>% 
   # estimate b and 95% CI
   mutate(mle = map(data, MLE_tidy, rsp_var = "dw")) %>%
   unnest(cols = mle)
 
-median(mle.dw$b)
-
-b_filt <- dw %>%
-  filter(dw >=0.0064) %>%
-  mutate(date = as.Date(collectDate)) %>%
-  group_by(siteID, collectDate) %>%
+mle.dw.rep <- dw %>%
+  group_by(site, rep) %>%
   # create list-column
   nest() %>% 
   # estimate b and 95% CI
   mutate(mle = map(data, MLE_tidy, rsp_var = "dw")) %>%
   unnest(cols = mle)
-median(b_filt$b)
 
-mle.dw <- b_filt
-# separate year out of collectDate column
-mle.dw <- mle.dw %>%
-  separate(collectDate,
-           c("year", "month", "day",
-             "hour", "min", "sec")) %>%
-  select(-hour, -min, -sec)
-
-# join b estimates with site.info
-# this should join by = c("siteID", "year")
-mle.dw <- inner_join(mle.dw, site.info)
-
-saveRDS(mle.dw, "data/mle_b_data.RDS")
-
-# Bayesian Model ----------------------------------------------------------
-
-b.mod <- brm(data = mle.dw,
-             b ~ mat.c + (1 |siteID) + (1|year), 
-             family = gaussian(),
-             prior = c(prior(normal(0,0.1),
-                             class = "b"),
-                       prior(normal(-1.5,1),
-                             class = "Intercept"),
-                       prior(exponential(2),
-                             class = "sigma"),
-                       prior(exponential(2),
-                             class = "sd")),
-             control = list(adapt_delta = 0.999),
-             chains = 4, 
-             sample_prior = TRUE,
-             iter = 6000,
-             cores = 4)
-
-# save model
-saveRDS(b.mod, "data/mle_b_mod.RDS")
-
-# model outputs and summaries
-b.mod
-fixef(b.mod)
-plot(conditional_effects(b.mod), points = TRUE)
-
-# posterior predictive check
-# Supplemental figure S4 (saved in script 5)
-pp_check(b.mod, type = "boxplot")
-
-
-# slope positive or negative?
-post.mod <- posterior_samples(b.mod)
-# probability that slope is less than 0
-sum(post.mod$b_mat.c < 0)/ nrow(post.mod)
-# probability that slope is positive 
-sum(post.mod$b_mat.c > 0)/ nrow(post.mod)
-
-# main figure -------------------------------------------------------------
-
-# main figure ####
-# data to condition on
-newdat <- tibble(
-  mat.c = seq(min(mle.dw$mat.c),
-              max(mle.dw$mat.c),
-              length.out = 100)) 
-
-# posterior samples to estimate from
-posts <- posterior_samples(b.mod) %>%
-  as_tibble() %>%
-  clean_names() %>%
-  mutate(iter = 1:nrow(.)) %>% 
-  sample_n(1000) %>% 
-  expand_grid(newdat) %>% 
-  mutate(b = b_intercept + b_mat_c*mat.c) %>% 
-  group_by(mat.c) %>% 
-  summarize(median = median(b),
-            lower = quantile(b, probs = 0.025),
-            upper = quantile(b, probs = 0.975))
-
-# plot
-# remove legend
-(plot_b <- posts %>% 
-    ggplot(aes(x = mat.c, y = median)) +
-    geom_point(data = mle.dw,
-               aes(y = b),
-               size = 1.7) +
-    geom_ribbon(alpha = 0.2,
-                aes(ymax = upper,
-                    ymin = lower)) + 
-    geom_line() +
-    labs(y = "b",
-         x = "Mean annual temperature C") +
-    # scale_color_brewer(type = "qual") +
-    theme_classic() +
-    # ylim(-5,5) +
-    geom_text(aes(x = -Inf, y = Inf, label = "a)"),
-              hjust = -.2,
-              vjust = 1.2)  +
-    NULL)
-
-# save panel for use in script 4 to make the plots
-saveRDS(plot_b, file = "plots/mat_c_b.rds")
-
-# posterior distributions of slope estimate -------------------------------
-
-site_b_est <- posterior_samples(b.mod) %>%
-  clean_names() %>%
-  mutate(iter = 1:nrow(.)) %>% 
-  #select(!contains("cor_site")) %>% 
-  pivot_longer(contains("r_site"), names_to = "site_ranef", values_to = "site_offset") %>%
-  pivot_longer(contains("r_year"), names_to = "year_ranef", values_to = "year_offset") %>%
-  mutate(siteID = str_sub(site_ranef, 11,14),
-         siteID = toupper(siteID),
-         year = str_sub(year_ranef, 8, 11)) %>%
-  inner_join(site.info) %>%
-  mutate(b_est = b_intercept + site_offset + year_offset +
-           b_mat_c * mat.c) %>%
-  group_by(siteID) %>%
-  mutate(median_b = median(b_est, na.rm = TRUE)) %>%
-  ungroup()
-
-# global median
-site_b_est %>% 
-  summarize(
-    med_b = median(b_est, na.rm = TRUE),
-    l95 = quantile(b_est, probs = 0.025, na.rm = TRUE),
-    u95 = quantile(b_est, probs = 0.975, na.rm = TRUE)) %>%
-  arrange(med_b)
-
-# smallest and largest slope
-site_b_est %>% 
-  group_by(siteID, mat.c) %>%
-  summarize(
-    med_b = median(b_est, na.rm = TRUE),
-    l95 = quantile(b_est, probs = 0.025, na.rm = TRUE),
-    u95 = quantile(b_est, probs = 0.975, na.rm = TRUE)) %>%
-  ungroup() %>%
-  arrange(med_b) %>%
-  slice(c(1, n()))
-
-
-(slope_post_A_panel <- site_b_est %>%
-    filter(iter <= 2000) %>%
-    ggplot() +
-    geom_density_ridges_gradient(aes(
-      x = b_est,
-      y = reorder(siteID, mat.c),
-      group = interaction(siteID, mat.c),
-      fill = mat.c
-    ),
-    scale = 2,
-    rel_min_height = 0.01,
-    quantile_lines = TRUE,
-    quantiles = 2) +
-    scale_fill_viridis_c(alpha = 0.5, option = "plasma") +
-    theme_bw() +
-    #xlim(c(-1.5, -1)) +
-    labs(y = "Site",
-         x = "Slope estimate") +
-    geom_text(aes(x = -Inf, y = Inf, label = "a)"),
-              hjust = -.2,
-              vjust = 1.2)  +
-    NULL)
-
-# save panel for use in script 4 to make the plots
-saveRDS(slope_post_A_panel,
-        file = "plots/slope_post_panel_A.RDS")
+mle.dw.rep %>% group_by(site) %>%
+  summarize(mean(b),
+            sd(b),
+            mean(minCI),
+            mean(maxCI)) 
