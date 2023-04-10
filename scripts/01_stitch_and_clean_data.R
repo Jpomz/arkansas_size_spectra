@@ -1,12 +1,29 @@
 # data prep
 
-upperDir <- "data/raw_csv" 
+# on march 3rd Taylor sent me new zipped data files. 
+# for now, keeping original raw csv data files in "data/raw_csv" 
+# original stitched data will be stored in "data/ark_csv_stitched.R"
+
+# new (march 3 2023) csv files are in "data/raw_csv_fixed" 
+# new stitched and cleaned files will be stored in "data/ark_csv_stitched_fixed.R"
+# once JP confirms with TB that new zips are "all" the files, delete old directory
+
+# Original upper directory
+# upperDir <- "data/raw_csv" 
+
+# current working directory (march 3 2023)
+ upperDir <- "data/raw_csv_fixed" 
+
 # vector of all of the paths to csv's within folder
 meas <- list.files(upperDir, full.names=TRUE) 
 # just the file name of each csv
 filename <- list.files(upperDir) 
 
-
+# comparing filenames in old v new
+# I think the "new" data zips are complete
+# old_files <- list.files(upperDir)
+# new_files <- list.files("data/raw_csv_fixed")
+# setdiff(new_files, old_files)
 
 #### Loop Reading in csv's ####
 
@@ -171,4 +188,8 @@ nrow(dataset[dataset$Label=="Perlidae(adult)",])
 
 
 # save the data set for further analysis
-saveRDS(dataset, "data/ark_csv_stitched.R")
+# original
+# saveRDS(dataset, "data/ark_csv_stitched.R")
+# new data as of march 3 2023
+
+saveRDS(dataset, "data/ark_csv_stitched_fixed.R")
