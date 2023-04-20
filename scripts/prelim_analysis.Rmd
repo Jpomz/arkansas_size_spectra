@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+dw <- readRDS(here::here("data/ark_dw.RDS"))
 ```
 
 
@@ -17,7 +18,7 @@ Preliminary analyses for Arkansas Size Spectra project
 
 Not shown: stitching all of the CSVs together, adding length-weight regression coefficients and estimating dry weight (dw) measurements
 
-```{r}
+```{r, eval=FALSE}
 dw <- readRDS("data/ark_dw.RDS")
 head(dw)
 ```
