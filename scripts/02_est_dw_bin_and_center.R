@@ -4,11 +4,11 @@
 library(tidyverse)
 
 # read in data made in first script
-# old version 
+# old versions 
 # dat <- readRDS("data/ark_csv_stitched.R")
+# dat <- readRDS("data/ark_csv_stitched_fixed.R")
 
-# new version
-dat <- readRDS("data/ark_csv_stitched_fixed.R")
+dat <- readRDS("data/ark_1990-1999-2012-2019-2021.R")
 
 # read in csv with length weight equations
 lw_coef <- read.csv("data/LW_coeffs.csv")
@@ -23,6 +23,8 @@ no_coef
 # Psychodidae --> Empididae
 # Uenoidae --> Limnephilidae
 # Hydroptilidae --> Rhyacophilidae
+
+# Pediciidae --> Tipulidae
 dat$Label <- gsub(
   pattern = "Psychodidae",
   replacement = "Empididae",
@@ -35,15 +37,21 @@ dat$Label <- gsub(
   pattern = "Hydroptilidae",
   replacement = "Rhyacophilidae",
   x = dat$Label)
+dat$Label <- gsub(
+  pattern = "Pediciidae",
+  replacement = "Tipulidae",
+  x = dat$Label)
 
 no_coef <- setdiff(unique(dat$Label), unique(lw_coef$taxon))
-
+no_coef
 
 # percent of data that has lw coeffs?
 (nrow(dat[dat$Label %in% no_coef,])/ nrow(dat))*100
 # ~ 9% no lw [4/17/22]
 # ~ 0.06% no lw [4/22/22] --> using surrogates above
 # ~0.4% no lw [4 march 2023] (I think 0.06% 4/22/22 maybe was supposed to be 0.6%?)
+# 0.39% no lw [4/20/23]
+
 
 # make string vector of column names we care about
 lw_cols <- c("taxon",
@@ -57,12 +65,6 @@ lw_cols <- c("taxon",
 # check formulas in LW for taxa in arkansas
 equations <- lw_coef[lw_coef$taxon %in% unique(dat$Label),]
 
-
-# I think this is old? 
-# commenting out for now
-# dat2 <- merge(dat2, lw_coef[,lw_cols], 
-#       by.x = "Label",
-#       by.y = "taxon", all.x = TRUE)
 
 # join the ark data with lw coef values
 fulldat <- merge(dat, lw_coef[,lw_cols], 
@@ -107,6 +109,16 @@ dw <- dw %>%
   mutate(year = case_when(year == 1900 ~ 1990,
                           TRUE ~ as.numeric(year)))
 
+
+# filter out data < or = 0.0026 mg
+# See SI from Perkins et al. 2018 Ecology Letters
+dw <- dw %>%
+  filter(dw>0.0026)
+
+min(dw$dw)
+
+# save data with estimated dry weights
+saveRDS(dw, "data/ark_dw.RDS")
 
 # bin function ####
 
@@ -160,15 +172,6 @@ bin_and_center <- function(data, var, breaks, ...){
   dataout
 }
 
-# filter out data < or = 0.0026 mg
-# See SI from Perkins et al. 2018 Ecology Letters
-dw <- dw %>%
-  filter(dw>0.0026)
-
-min(dw$dw)
-
-# save data with estimated dry weights
-saveRDS(dw, "data/ark_dw.RDS")
 
 # stop here ####
 # below is old binning technique

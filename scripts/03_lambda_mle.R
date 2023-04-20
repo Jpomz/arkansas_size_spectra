@@ -57,12 +57,19 @@ MLE_tidy <- function(df, rsp_var){
 
 # read in dry weight data
 dat <- readRDS("data/ark_dw.RDS")
+dat %>%
+  distinct(year) %>%
+  arrange(year)
 
 # set years as ordered factors
 dat <- dat %>%
   mutate(y_fact = 
            factor(year,
-                  levels = c("1990", "2012", "2019")))
+                  levels = c("1990",
+                             "1999",
+                             "2012",
+                             "2019",
+                             "2021")))
 
 # how many individuals by site and year?
 dat %>%
@@ -130,6 +137,7 @@ mle_lambda %>%
 
 # adding line for visualization
 # I think I like pointrange above better
+# function from a different ggplot add on??
 ggline(mle_lambda, 
        x = "y_fact",
        y = "b",
