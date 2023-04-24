@@ -120,6 +120,24 @@ mle_lambda %>%
   arrange(site, y_fact)
 
 # plot point range of lambda values
+# years on correct scale
+mle_lambda %>%
+  ggplot(aes(y = b,
+             ymin = minCI,
+             ymax = maxCI,
+             x = year(as.Date(y_fact, 
+                              format = "%Y")),
+             color = site)) +
+  geom_pointrange(
+    size = 1,
+    position = position_dodge(
+      width = 0.25
+    )) +
+  theme_bw() +
+  labs(y = expression(lambda),
+       x = "year")
+# plot point range of lambda values
+# years as factor
 mle_lambda %>%
   ggplot(aes(y = b,
              ymin = minCI,
@@ -134,6 +152,7 @@ mle_lambda %>%
   theme_bw() +
   labs(y = expression(lambda),
        x = "year")
+
 
 # adding line for visualization
 # I think I like pointrange above better
