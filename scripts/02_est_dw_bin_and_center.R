@@ -187,32 +187,92 @@ bin_and_center <- function(data, var, breaks, ...){
 # 
 # # define break widths
 # # this code is for log2 width bins
-# breaks = 2^seq(floor(range(log2(dw$dw))[1]),
-#                ceiling(range(log2(dw$dw))[2]))
+breaks = 2^seq(floor(range(log2(dw$dw))[1]),
+               ceiling(range(log2(dw$dw))[2]))
+
+dw_bin <- dw %>%
+  group_by(site, year) %>%
+  select(dw) %>%
+  nest(size_data = dw) %>%
+  mutate(bin = map(size_data,
+                   bin_and_center,
+                   "dw",
+                   breaks = breaks)) %>%
+  unnest(cols = bin) %>%
+  select(-size_data) %>%
+  ungroup()
 # 
-# dw_bin <- dw %>%
-#   group_by(site, year) %>%
-#   select(dw) %>%
-#   nest(size_data = dw) %>%
-#   mutate(bin = map(size_data,
-#                    bin_and_center,
-#                    "dw",
-#                    breaks = breaks)) %>%
-#   unnest(cols = bin) %>%
-#   select(-size_data) %>%
-#   ungroup()
-# 
-# ggplot(dw_bin,
-#        aes(x = log_mids_center,
-#            y = log_count_corrected,
-#            color = as.factor(year),
-#            shape = site)) +
-#   geom_point() +
-#   geom_smooth(
-#     #aes(group = interaction(site, year)),
-#     method = "lm",
-#     se = FALSE) +
-#   facet_wrap(year~site)
+ggplot(dw_bin,
+       aes(x = log_mids_center,
+           y = log_count_corrected,
+           color = site)) +
+  geom_point() +
+  geom_smooth(
+    #aes(group = interaction(site, year)),
+    method = "lm",
+    se = FALSE) +
+  facet_wrap(year~.) +
+  theme_bw() +
+  theme(
+    #  strip.background = element_blank(),
+    #strip.text.x = element_blank(),
+    axis.text = element_blank()) +
+  labs(y = "Bin Count",
+       x = "Binned dry mass (mg)",
+       color = "Site")
+ggsave(file = "plots/binned_spectra.png",
+       units = "in",
+       width = 6,
+       height = 6)
+
+ggplot(dw_bin,
+       aes(x = log_mids_center,
+           y = log_count_corrected,
+           color = year,
+           group = year)) +
+  geom_point() +
+  geom_smooth(
+    #aes(group = interaction(site, year)),
+    method = "lm",
+    se = FALSE) +
+  facet_wrap(site~.) +
+  theme_bw() +
+  theme(
+    #  strip.background = element_blank(),
+    #strip.text.x = element_blank(),
+    axis.text = element_blank()) +
+  labs(y = "Bin Count",
+       x = "Binned dry mass (mg)",
+       color = "Year")
+ggsave(file = "plots/binned_spectra_by-site.png",
+       units = "in",
+       width = 6,
+       height = 6)
+
+
+dw_bin %>%
+  filter(year == 1990 | year == 2021) %>%
+  ggplot(aes(x = log_mids_center,
+             y = log_count_corrected,
+             color = site)) +
+  geom_point() +
+  geom_smooth(
+    #aes(group = interaction(site, year)),
+    method = "lm",
+    se = FALSE) +
+  facet_wrap(year~.) +
+  theme_bw() +
+  theme(
+    #  strip.background = element_blank(),
+    #strip.text.x = element_blank(),
+    axis.text = element_blank()) +
+  labs(y = "Bin Count",
+       x = "Binned dry mass (mg)",
+       color = "Site")
+ggsave(file = "plots/binned_1990-2021.png",
+       units = "in",
+       width = 6,
+       height = 6)
 # 
 # ggplot(dw_bin,
 #        aes(x = log_mids,
