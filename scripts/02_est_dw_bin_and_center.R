@@ -8,7 +8,7 @@ library(tidyverse)
 # dat <- readRDS("data/ark_csv_stitched.R")
 # dat <- readRDS("data/ark_csv_stitched_fixed.R")
 
-dat <- readRDS("data/ark_1990-1999-2012-2019-2021.R")
+dat <- readRDS("data/ark_1990-1999-2012-2019-2021.RDS")
 
 # read in csv with length weight equations
 lw_coef <- read.csv("data/LW_coeffs.csv")
@@ -45,7 +45,7 @@ dat$Label <- gsub(
 no_coef <- setdiff(unique(dat$Label), unique(lw_coef$taxon))
 no_coef
 
-# percent of data that has lw coeffs?
+# percent of data that does not have lw coeffs?
 (nrow(dat[dat$Label %in% no_coef,])/ nrow(dat))*100
 # ~ 9% no lw [4/17/22]
 # ~ 0.06% no lw [4/22/22] --> using surrogates above
@@ -181,32 +181,32 @@ bin_and_center <- function(data, var, breaks, ...){
 # 
 # # define break widths
 # # this code is for log2 width bins
-# breaks = 2^seq(floor(range(log2(dw$dw))[1]),
-#                ceiling(range(log2(dw$dw))[2]))
+breaks = 2^seq(floor(range(log2(dw$dw))[1]),
+               ceiling(range(log2(dw$dw))[2]))
+
+dw_bin <- dw %>%
+  group_by(site, year) %>%
+  select(dw) %>%
+  nest(size_data = dw) %>%
+  mutate(bin = map(size_data,
+                   bin_and_center,
+                   "dw",
+                   breaks = breaks)) %>%
+  unnest(cols = bin) %>%
+  select(-size_data) %>%
+  ungroup()
 # 
-# dw_bin <- dw %>%
-#   group_by(site, year) %>%
-#   select(dw) %>%
-#   nest(size_data = dw) %>%
-#   mutate(bin = map(size_data,
-#                    bin_and_center,
-#                    "dw",
-#                    breaks = breaks)) %>%
-#   unnest(cols = bin) %>%
-#   select(-size_data) %>%
-#   ungroup()
-# 
-# ggplot(dw_bin,
-#        aes(x = log_mids_center,
-#            y = log_count_corrected,
-#            color = as.factor(year), 
-#            shape = site)) +
-#   geom_point() +
-#   geom_smooth(
-#     #aes(group = interaction(site, year)),
-#     method = "lm",
-#     se = FALSE) +
-#   facet_wrap(.~site)
+ggplot(dw_bin,
+       aes(x = log_mids_center,
+           y = log_count_corrected,
+           color = as.factor(year),
+           shape = site)) +
+  geom_point() +
+  geom_smooth(
+    #aes(group = interaction(site, year)),
+    method = "lm",
+    se = FALSE) +
+  facet_wrap(year~site)
 # 
 # ggplot(dw_bin,
 #        aes(x = log_mids,
