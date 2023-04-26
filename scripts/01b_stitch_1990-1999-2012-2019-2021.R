@@ -40,6 +40,7 @@ for (i in 1:length(meas)){
 # time for code to run?
 end_time <- Sys.time()
 end_time - start_time
+# jpz's work HP= 51 seconds
 
 # Value is comin in as "character" (empty rows?)
 # setting as.numeric

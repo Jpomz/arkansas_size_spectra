@@ -84,14 +84,16 @@ fulldat <- fulldat %>%
     formula_type == 1 ~ a * Value^b,
     formula_type == 2 ~ exp(a + b * log(Value))))
 
-dim(fulldat)
+
 
 # remove any dry weight values < or = to 0
 dw <- fulldat %>%
   filter(dw >0) %>%
   select(file, dw)
 
-dim(dw)
+nrow(fulldat)
+nrow(dw)
+
 names(dw)
 
 
@@ -116,6 +118,10 @@ dw <- dw %>%
   filter(dw>0.0026)
 
 min(dw$dw)
+
+# percent of "full data" that has dw estimates?
+nrow(dw) / nrow(fulldat)
+# 99.7679% [4/26/2023]
 
 # save data with estimated dry weights
 saveRDS(dw, "data/ark_dw.RDS")
@@ -181,32 +187,32 @@ bin_and_center <- function(data, var, breaks, ...){
 # 
 # # define break widths
 # # this code is for log2 width bins
-breaks = 2^seq(floor(range(log2(dw$dw))[1]),
-               ceiling(range(log2(dw$dw))[2]))
-
-dw_bin <- dw %>%
-  group_by(site, year) %>%
-  select(dw) %>%
-  nest(size_data = dw) %>%
-  mutate(bin = map(size_data,
-                   bin_and_center,
-                   "dw",
-                   breaks = breaks)) %>%
-  unnest(cols = bin) %>%
-  select(-size_data) %>%
-  ungroup()
+# breaks = 2^seq(floor(range(log2(dw$dw))[1]),
+#                ceiling(range(log2(dw$dw))[2]))
 # 
-ggplot(dw_bin,
-       aes(x = log_mids_center,
-           y = log_count_corrected,
-           color = as.factor(year),
-           shape = site)) +
-  geom_point() +
-  geom_smooth(
-    #aes(group = interaction(site, year)),
-    method = "lm",
-    se = FALSE) +
-  facet_wrap(year~site)
+# dw_bin <- dw %>%
+#   group_by(site, year) %>%
+#   select(dw) %>%
+#   nest(size_data = dw) %>%
+#   mutate(bin = map(size_data,
+#                    bin_and_center,
+#                    "dw",
+#                    breaks = breaks)) %>%
+#   unnest(cols = bin) %>%
+#   select(-size_data) %>%
+#   ungroup()
+# 
+# ggplot(dw_bin,
+#        aes(x = log_mids_center,
+#            y = log_count_corrected,
+#            color = as.factor(year),
+#            shape = site)) +
+#   geom_point() +
+#   geom_smooth(
+#     #aes(group = interaction(site, year)),
+#     method = "lm",
+#     se = FALSE) +
+#   facet_wrap(year~site)
 # 
 # ggplot(dw_bin,
 #        aes(x = log_mids,
