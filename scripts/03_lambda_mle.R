@@ -146,15 +146,19 @@ mle_lambda %>%
              x = y_fact,
              color = site)) +
   geom_pointrange(
-    size = 1,
+    size = 0.5,
     position = position_dodge(
       width = 0.25
     )) +
   theme_bw() +
+    scale_color_viridis_d(option = "plasma", begin = 0.25, end = 0.75) +
   labs(y = expression(lambda),
        x = "year"))
 ggsave(lambda_year_plot, 
-       file = "plots/lambda_year.png")
+       file = "plots/lambda_year.png",
+       units = "in",
+       width = 6,
+       height = 6)
 
 
 # adding line for visualization
@@ -240,6 +244,7 @@ lines_toplot = bind_rows(xy.PLB)  %>%
   scale_y_log10() +
   facet_wrap(~year) +
   theme_bw() +
+    scale_color_viridis_d(option = "plasma", begin = 0.25, end = 0.75) +
   theme(
   #  strip.background = element_blank(),
     #strip.text.x = element_blank(),
@@ -260,7 +265,7 @@ lines_2 <- lines_toplot%>%
          year == 1990 | year == 2021)
   
   
-two_plots <- dat_2 %>% 
+(two_plots <- dat_2 %>% 
   mutate(facet_name = paste(site, sample_int)) %>% 
   ggplot(aes(x = dw, y = y_order, group = sample_int)) + 
   geom_point(shape = 21,
@@ -271,8 +276,7 @@ two_plots <- dat_2 %>%
             aes(color = as.factor(round(lambda, 2)))) +
   geom_ribbon(data = lines_2 , 
               aes(ymin = ymin,
-                  ymax = ymax,
-                  fill = as.factor(round(lambda, 2))), alpha = 0.2) +
+                  ymax = ymax), alpha = 0.2) +
   scale_x_log10() +
   scale_y_log10() +
   #facet_wrap(~year) +
@@ -284,11 +288,15 @@ two_plots <- dat_2 %>%
   labs(y = "Number of values \u2265 x",
        x = "Individual dry mass (mg)",
        color = "Lambda") +
-  guides(fill = "none") +
-  coord_cartesian(ylim = c(limits = c(min(dat_2$y_order), NA)))
+  guides(fill = "none") +scale_color_viridis_d(option = "plasma", begin = 0.25, end = 0.75) +
+  coord_cartesian(ylim = c(limits = c(min(dat_2$y_order), NA))))
+
 
 ggsave(two_plots, 
-       file = "plots/steep_shallow.png")
+       file = "plots/steep_shallow.png",
+       units = "in",
+       width = 6,
+       height = 6)
 
 
 

@@ -228,7 +228,7 @@ ggsave(file = "plots/binned_spectra.png",
 ggplot(dw_bin,
        aes(x = log_mids_center,
            y = log_count_corrected,
-           color = year,
+           color = as.factor(year),
            group = year)) +
   geom_point() +
   geom_smooth(
@@ -243,7 +243,14 @@ ggplot(dw_bin,
     axis.text = element_blank()) +
   labs(y = "Bin Count",
        x = "Binned dry mass (mg)",
-       color = "Year")
+       color = "Year") +
+  scale_color_grey() +
+  geom_abline(slope = -1.0,
+              intercept = 2.089 + 0.25,
+              linetype = "dashed", 
+              color = "red", 
+              linewidth = 2)
+
 ggsave(file = "plots/binned_spectra_by-site.png",
        units = "in",
        width = 6,
@@ -268,7 +275,16 @@ dw_bin %>%
     axis.text = element_blank()) +
   labs(y = "Bin Count",
        x = "Binned dry mass (mg)",
-       color = "Site")
+       color = "Site") +
+  scale_color_manual(
+    values = c("gray1", "gray55")
+  ) +
+  geom_abline(slope = -1.0,
+              intercept = 2.089 + 0.25,
+              linetype = "dashed", 
+              color = "red", 
+              linewidth = 2)
+
 ggsave(file = "plots/binned_1990-2021.png",
        units = "in",
        width = 6,
@@ -301,11 +317,16 @@ ggsave(file = "plots/binned_1990-2021.png",
 # 
 # 
 # # preliminary statistics
-# dw_bin <- dw_bin %>%
-#   mutate(y_fact = factor(year, 
-#                             levels = c("1990", "2012", "2019")))
+dw_bin <- dw_bin%>%
+  mutate(y_fact = 
+           factor(year,
+                  levels = c("1990",
+                             "1999",
+                             "2012",
+                             "2019",
+                             "2021")))
 # 
-# # summary(lm(log_count_corrected ~ log_mids_center + site*y_fact, data = dw_bin))
+summary(lm(log_count_corrected ~ log_mids_center + site*y_fact, data = dw_bin))
 # # 
 # # summary(lm(log_count_corrected ~ log_mids_center*site, data = dw_bin))
 # # 
