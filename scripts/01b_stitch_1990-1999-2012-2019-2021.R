@@ -25,10 +25,13 @@ start_time <- Sys.time()
 
 for (i in 1:length(meas)){ 
   #length(meas) = number of total files within folder
-  # just do this once?? ####
+  
+  # if errors occur when reading in files, you may need to add an empty line to the csv files. 
+  # Uncomment the following once 
+  
   # adding empty line to csv files
   #cat("\n", file = meas[i], append = TRUE)
-  # end weird extra line bit ####
+  
   
   # creating temporary dataset for file
   temp_dataset <- read.csv(meas[i],
