@@ -125,6 +125,7 @@ nrow(dw) / nrow(fulldat)
 
 # save data with estimated dry weights
 saveRDS(dw, "data/ark_dw.RDS")
+# dw <- readRDS("data/ark_dw.RDS")
 
 # bin function ####
 
@@ -514,3 +515,12 @@ summary(lm(log_count_corrected ~ log_mids_center + site*y_fact, data = dw_bin))
 #   mutate(coefs = map(model, coef)) %>%
 #   unnest(coefs) %>%
 #   arrange(site, year)
+dw %>%
+  #filter(year == 2012) %>%
+  group_by(site, year) %>%
+  summarize(q95 = quantile(dw, probs = 0.95),
+            q05 = quantile(dw, probs = 0.05)) %>%
+  ggplot(aes(x = year,
+             y = q95,
+             color = site)) +
+  geom_point()

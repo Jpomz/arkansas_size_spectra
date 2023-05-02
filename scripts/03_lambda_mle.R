@@ -1,9 +1,15 @@
 # mle tidy
 
-library(tidyverse)
-#library(lubridate)
+# `sizeSpectra` is not hosted on CRAN
+# to install the package directly from github, you need to have the `devtools` package installed. Run the following once if you don't already have it downloaded
+# install.packages("devtools") 
+
+#To install the latest version of sizeSpectra, run the following:
+# devtools::install_github("andrew-edwards/sizeSpectra")
+
 library(sizeSpectra)
-#library(ggpubr)
+library(tidyverse)
+
 
 # custom function 
 MLE_tidy <- function(df, rsp_var){
