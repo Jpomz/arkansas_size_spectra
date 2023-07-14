@@ -1,0 +1,6 @@
+Analysis update, July 2023
+
+began analysis using Wesner's isdBayes package
+On my local copy of isdbayes project, I have an "ark_data.R" script. Need to move that to this repo, along with custom functions from Jeff to reproduce analysis in this rep. 
+
+Moved files over, haven't run yet to see if I got the write stuff or not 
