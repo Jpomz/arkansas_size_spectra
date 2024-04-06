@@ -82,7 +82,8 @@ dat <- dat %>%
 dat %>%
   filter(dw >0.0026) %>%
   group_by(site, y_fact) %>%
-  count()
+  count() %>%
+  arrange(y_fact)
 
 # how many individuals per sample?
 dat %>%
@@ -113,7 +114,7 @@ dat %>%
 ## This is unknown parameter that we are estimating 
 mle_lambda <- dat %>%
   filter(dw >0.0026) %>%
-  group_by(site, y_fact) %>%
+  group_by(site, year) %>%
   nest() %>%
   mutate(lambda = map(data,
                    MLE_tidy,
@@ -126,14 +127,18 @@ mle_lambda <- dat %>%
 mle_lambda %>%
   arrange(site, y_fact)
 
+
+summary(lm(b~site*scale(year), data = mle_lambda))
+
 # plot point range of lambda values
 # years on correct scale
 mle_lambda %>%
   ggplot(aes(y = b,
              ymin = minCI,
              ymax = maxCI,
-             x = year(as.Date(y_fact, 
-                              format = "%Y")),
+             x = year,
+             # x = year(as.Date(year, 
+             #                  format = "%Y")),
              color = site)) +
   geom_pointrange(
     size = 1,
@@ -142,7 +147,8 @@ mle_lambda %>%
     )) +
   theme_bw() +
   labs(y = expression(lambda),
-       x = "year")
+       x = "year") +
+  stat_smooth()
 # plot point range of lambda values
 # years as factor
 (lambda_year_plot <- mle_lambda %>%
