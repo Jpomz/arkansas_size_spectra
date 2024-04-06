@@ -240,6 +240,9 @@ snotel <- read_csv("data/SNOTEL_temperature.csv", skip = 58)
 names(snotel) <- c("year", "station_id", "station_name", "mean_air_temp")
 
 # usgs gauge 07086000
+
+# generated and downloaded from:
+# https://waterdata.usgs.gov/nwis/annual?referred_module=sw&amp;site_no=07086000&amp;por_07086000_295112=344915,00010,295112,1994,2024&amp;start_dt=1994&amp;end_dt=2024&amp;year_type=W&amp;format=html_table&amp;date_format=YYYY-MM-DD&amp;rdb_compression=file&amp;submitted_form=parameter_selection_list
 usgs <- read_tsv("data/USGS_07086000_temperature.csv", skip = 34)
 # remove first row and only keep last two columns
 usgs <- usgs[-1,5:6]
