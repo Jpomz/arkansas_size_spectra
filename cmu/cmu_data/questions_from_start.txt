@@ -1,0 +1,49 @@
+Questions:
+
+Why are there "pt" units?
+
+> dataset %>%
++   filter(Unit == "pt")
+  Label     Type  Value Unit                      file
+1       Distance 141.74   pt AR1_s1_27-10-1990_030.csv
+2       Distance 124.71   pt AR1_s1_27-10-1990_032.csv
+
+two dates for AR# in 1990?
+is 07 supposed to be 27 or vice versa?
+
+distinct(dataset,
++          site, 
++          date)
+  site       date
+1  AR1 1990-10-27
+2  AR1 2012-09-30
+3  AR3 1990-10-07
+4  AR3 2012-09-30
+5  AR3 1990-10-27
+
+
+Empty strings in Label?
+csvs need to have taxa added to it?
+file
+1  AR1_s2_30-09-2012_002.csv
+2  AR1_s5_27-10-1990_019.csv
+3  AR3_s3_30-09-2012_007.csv
+4  AR3_s3_30-09-2012_008.csv
+5  AR3_s3_30-09-2012_009.csv
+6  AR3_s3_30-09-2012_011.csv
+7  AR3_s3_30-09-2012_012.csv
+8  AR3_s3_30-09-2012_013.csv
+9  AR3_s3_30-09-2012_014.csv
+10 AR3_s3_30-09-2012_015.csv
+11 AR3_s3_30-09-2012_016.csv
+12 AR3_s4_30-09-2012_001.csv
+13 AR3_s4_30-09-2012_002.csv
+
+
+Why is label a number in this file?
+> dataset %>%
++   filter(Label == "35.73") %>%
++   distinct(file)
+                       file
+1 AR1_s2_27-10-1990_013.csv
+
