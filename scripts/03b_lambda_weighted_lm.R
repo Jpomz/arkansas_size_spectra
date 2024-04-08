@@ -77,6 +77,9 @@ dat %>%
 # 0 rows, already filtered
 
 
+# Per replicate -----------------------------------------------------------
+
+
 dat %>%
   filter(dw >0.0026) %>%
   group_by(site, rep, y_fact) %>%
@@ -118,6 +121,7 @@ mle_lambda_rep %>%
   geom_pointrange(
     position = position_dodge(width = 1)
   ) +
+  scale_color_manual(values = c("#019AFF", "#FF1984")) +
   # stat_smooth(method = "lm", 
   #             inherit.aes = FALSE,
   #             aes(x = year, y = b, color = site)) +
@@ -171,3 +175,123 @@ mle_lambda_rep %>%
   mutate(year_c = year - mean(year)) %>%
   lm(mean_b ~ site*year_c, data = .) %>%
   summary()
+
+
+# combine reps ------------------------------------------------------------
+
+
+
+# estimate lambda exponent of a power law
+# N ~ M^b
+# N = number of individuals
+# M = individual body size
+# b = lambda, exponent describing power law
+## This is unknown parameter that we are estimating 
+mle_lambda <- dat %>%
+  #filter(dw >0.0026) %>%
+  group_by(site, year) %>%
+  nest() %>%
+  mutate(lambda = map(data,
+                      MLE_tidy,
+                      "dw")) %>%
+  unnest(cols = lambda) %>%
+  select(-data) %>%
+  ungroup()
+
+mle_lambda <- mle_lambda %>% 
+  mutate(se = (maxCI - minCI) / 2 * 1.96,
+         var = se**2,
+         year_0 = year - min(year))
+
+weighted_ols <- lm(b~site*year_0, dat = mle_lambda, weights = var)
+summary(weighted_ols)
+
+ggplot(mle_lambda,
+       aes(x = year,
+           y = b,
+           ymin = minCI,
+           ymax = maxCI,
+           color = site)) +
+  geom_pointrange() +
+  scale_color_manual(values = c("#019AFF", "#FF1984")) +
+  geom_smooth(method = "lm", 
+              aes(weight = var),
+              alpha = 0.15) +
+  labs(y = "Estimated \U03BB",
+       x = "Year") +
+  theme_bw()
+ggsave("plots/mle_weighted_ols_Apr_2024.png",
+       units = "in",
+       width = 7,
+       height = 6)
+
+
+# Temperature -------------------------------------------------------------
+
+# generated and downloaded from:
+# https://wcc.sc.egov.usda.gov/reportGenerator/view/customWaterYearGroupByMonthReport/annual_calendar_year/start_of_period/369:CO:SNTL%7C485:CO:SNTL%7C547:CO:SNTL%7C938:CO:SNTL%7Cid=%22%22%7Cname/1990-01-01,2024-01-01/stationId,name,TAVG::value?fitToScreen=false
+
+# 369	Brumley	CO	SNTL
+# 938	Buckskin Joe	CO	SNTL
+# 485	Fremont Pass	CO	SNTL
+# 547	Ivanhoe	CO	SNTL
+
+snotel <- read_csv("data/SNOTEL_temperature.csv", skip = 58)
+names(snotel) <- c("year", "station_id", "station_name", "mean_air_temp")
+
+# usgs gauge 07086000
+
+# generated and downloaded from:
+# https://waterdata.usgs.gov/nwis/annual?referred_module=sw&amp;site_no=07086000&amp;por_07086000_295112=344915,00010,295112,1994,2024&amp;start_dt=1994&amp;end_dt=2024&amp;year_type=W&amp;format=html_table&amp;date_format=YYYY-MM-DD&amp;rdb_compression=file&amp;submitted_form=parameter_selection_list
+usgs <- read_tsv("data/USGS_07086000_temperature.csv", skip = 34)
+# remove first row and only keep last two columns
+usgs <- usgs[-1,5:6]
+names(usgs) <- c("year", "mean_temp")
+usgs <- usgs %>%
+  mutate(mean_temp = as.numeric(mean_temp))
+
+# plots
+snotel %>%
+  ggplot(aes(x = year, y = mean_air_temp,
+             color = station_name)) +
+  geom_point() +
+  stat_smooth(method = "lm") +
+  labs(y = "Annual mean air temperature",
+       x = "Year") +
+  theme_bw()
+
+snotel %>%
+  ggplot(aes(x = year, y = mean_air_temp,
+             color = station_name)) +
+  geom_point() +
+  stat_smooth(method = "lm",
+              inherit.aes = FALSE,
+              aes(x = year, y = mean_air_temp)) +
+  labs(y = "Annual mean air temperature \U00B0 C",
+       x = "Year") +
+  theme_bw()
+ggsave("plots/snotel_temp_Apr_2024.png",
+       units = "in",
+       width = 7,
+       height = 6)
+
+usgs %>%
+  ggplot(aes(x = year, 
+             y = mean_temp)) +
+  geom_point() +
+  stat_smooth(method = "lm")+
+  labs(y = "Annual mean water temperature \U00B0 C",
+       x = "Year") +
+  theme_bw()
+ggsave("plots/usgs_temp_Apr_2024.png",
+       units = "in",
+       width = 7,
+       height = 6)
+
+# lm stats
+summary(lm(mean_air_temp ~ year, data = snotel))
+# average air temp across snotel sites increasing by:
+# 0.17 degrees C per year
+summary(lm(mean_temp ~ year, data = usgs))
+# average water temperature at usgs gauge downstream increasing by:
+# 0.033 degrees per year. 

@@ -1,0 +1,181 @@
+#------------------------------------------------- WARNING --------------------------------------------
+# 
+# The data you have obtained from this automated Natural Resources Conservation Service 
+# database are subject to revision regardless of indicated Quality Assurance level. 
+# Data are released on condition that neither the NRCS nor the United States Government 
+# may be held liable for any damages resulting from its use. 
+# 
+# SNOTEL air temperature data contains a known bias. This bias is rooted in the sensor 
+# conversion equation and varies through the output range. Solutions are in development. 
+# For more information go to Air Temperature Bias Correction. 
+# 
+# Help and Tutorials: https://www.nrcs.usda.gov/sites/default/files/2023-03/Report%20Generator%20Help%20Guide.pdf
+# Air Temperature Bias Correction: https://www.nrcs.usda.gov/wps/portal/wcc/home/snowClimateMonitoring/temperature/temperatureBiasCorrection/
+# 
+# Support Contact: usdafpacbc@servicenowservices.com
+# 
+#------------------------------------------------------------------------------------------------------
+# 
+# Reporting Frequency: Annual Calendar Year
+# Date Range: 1990 to 2024
+#
+# Data for the following site(s) are contained in this file:
+#
+#	SNOTEL 369: Brumley, CO
+#	SNOTEL 938: Buckskin Joe, CO
+#	SNOTEL 485: Fremont Pass, CO
+#	SNOTEL 547: Ivanhoe, CO
+# 
+# Data items provided in this file:
+#
+# Element Name             Value Type  Function Type  Function Duration  Base Data  Measurement Units   Sensor Depth  Element Code  Description                                              
+# Air Temperature Average  Value       None           Year               N/A        Degrees fahrenheit  N/A           TAVG          Average air temperature - sub-hourly sampling frequency  
+# 
+# Quality Control flags included:
+#
+# Flag    Name                Description
+#  V      Valid               Validated Data
+#  N      No Profile          No profile for automated validation
+#  E      Edit                Edit, minor adjustment for sensor noise
+#  B      Back Estimate       Regression-based estimate for homogenizing collocated Snow Course and Snow Pillow data sets
+#  K      Estimate            Estimate
+#  X      External Estimate   External estimate
+#  S      Suspect             Suspect data
+# 
+# Quality Assurance flags included:
+#
+# Flag    Name                Description
+#  U      Unknown             Unknown
+#  R      Raw                 No Human Review
+#  P      Provisional         Preliminary Human Review
+#  A      Approved            Processing and Final Review Completed
+# 
+#------------------------------------------------------------------------------------------------------
+# 
+# Reporting Frequency: Annual; Date Range: 1990 to 2024
+#
+# As of: Apr 6, 2024, 9:12:45 AM GMT-08:00
+#
+Year,Station Id,Station Name,Air Temperature Average (degF)
+1990,369,Brumley,30.4
+1991,369,Brumley,29.8
+1992,369,Brumley,30.4
+1993,369,Brumley,29.4
+1994,369,Brumley,31.6
+1995,369,Brumley,30.5
+1996,369,Brumley,31.0
+1997,369,Brumley,30.4
+1998,369,Brumley,31.2
+1999,369,Brumley,31.5
+2000,369,Brumley,32.0
+2001,369,Brumley,31.6
+2002,369,Brumley,31.3
+2003,369,Brumley,32.4
+2004,369,Brumley,31.0
+2005,369,Brumley,32.7
+2006,369,Brumley,33.9
+2007,369,Brumley,34.7
+2008,369,Brumley,32.7
+2009,369,Brumley,
+2010,369,Brumley,
+2011,369,Brumley,33.3
+2012,369,Brumley,35.4
+2013,369,Brumley,32.9
+2014,369,Brumley,34.0
+2015,369,Brumley,35.0
+2016,369,Brumley,34.9
+2017,369,Brumley,36.0
+2018,369,Brumley,34.9
+2019,369,Brumley,33.4
+2020,369,Brumley,34.7
+2021,369,Brumley,34.3
+2022,369,Brumley,33.0
+2023,369,Brumley,32.8
+2000,938,Buckskin Joe,34.6
+2001,938,Buckskin Joe,34.5
+2002,938,Buckskin Joe,34.4
+2003,938,Buckskin Joe,35.0
+2004,938,Buckskin Joe,33.7
+2005,938,Buckskin Joe,
+2006,938,Buckskin Joe,
+2007,938,Buckskin Joe,35.8
+2008,938,Buckskin Joe,34.2
+2009,938,Buckskin Joe,
+2010,938,Buckskin Joe,
+2011,938,Buckskin Joe,34.8
+2012,938,Buckskin Joe,37.2
+2013,938,Buckskin Joe,34.7
+2014,938,Buckskin Joe,35.5
+2015,938,Buckskin Joe,36.8
+2016,938,Buckskin Joe,36.8
+2017,938,Buckskin Joe,37.5
+2018,938,Buckskin Joe,36.7
+2019,938,Buckskin Joe,35.4
+2020,938,Buckskin Joe,36.9
+2021,938,Buckskin Joe,
+2022,938,Buckskin Joe,
+2023,938,Buckskin Joe,34.9
+1990,485,Fremont Pass,25.9
+1991,485,Fremont Pass,28.2
+1992,485,Fremont Pass,28.8
+1993,485,Fremont Pass,26.9
+1994,485,Fremont Pass,29.8
+1995,485,Fremont Pass,28.7
+1996,485,Fremont Pass,29.2
+1997,485,Fremont Pass,28.4
+1998,485,Fremont Pass,29.7
+1999,485,Fremont Pass,29.7
+2000,485,Fremont Pass,30.3
+2001,485,Fremont Pass,30.3
+2002,485,Fremont Pass,29.7
+2003,485,Fremont Pass,30.5
+2004,485,Fremont Pass,29.3
+2005,485,Fremont Pass,30.0
+2006,485,Fremont Pass,30.5
+2007,485,Fremont Pass,33.1
+2008,485,Fremont Pass,31.1
+2009,485,Fremont Pass,
+2010,485,Fremont Pass,33.4
+2011,485,Fremont Pass,32.5
+2012,485,Fremont Pass,34.9
+2013,485,Fremont Pass,32.1
+2014,485,Fremont Pass,33.0
+2015,485,Fremont Pass,34.3
+2016,485,Fremont Pass,34.1
+2017,485,Fremont Pass,34.9
+2018,485,Fremont Pass,34.0
+2019,485,Fremont Pass,32.6
+2020,485,Fremont Pass,34.2
+2021,485,Fremont Pass,34.1
+2022,485,Fremont Pass,31.8
+2023,485,Fremont Pass,31.9
+1994,547,Ivanhoe,34.9
+1995,547,Ivanhoe,33.2
+1996,547,Ivanhoe,
+1997,547,Ivanhoe,
+1998,547,Ivanhoe,34.2
+1999,547,Ivanhoe,34.2
+2000,547,Ivanhoe,34.8
+2001,547,Ivanhoe,34.8
+2002,547,Ivanhoe,34.1
+2003,547,Ivanhoe,35.2
+2004,547,Ivanhoe,34.3
+2005,547,Ivanhoe,34.8
+2006,547,Ivanhoe,34.5
+2007,547,Ivanhoe,35.3
+2008,547,Ivanhoe,31.9
+2009,547,Ivanhoe,30.6
+2010,547,Ivanhoe,35.2
+2011,547,Ivanhoe,34.2
+2012,547,Ivanhoe,36.7
+2013,547,Ivanhoe,34.0
+2014,547,Ivanhoe,35.1
+2015,547,Ivanhoe,36.4
+2016,547,Ivanhoe,35.8
+2017,547,Ivanhoe,36.9
+2018,547,Ivanhoe,36.0
+2019,547,Ivanhoe,34.6
+2020,547,Ivanhoe,36.2
+2021,547,Ivanhoe,
+2022,547,Ivanhoe,34.5
+2023,547,Ivanhoe,34.8
