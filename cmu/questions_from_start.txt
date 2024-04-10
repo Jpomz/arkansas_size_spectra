@@ -1,6 +1,6 @@
 Questions:
 
-Why are there "pt" units?
+Why are there "pt" units? Is this "pixels" or something?
 
 > dataset %>%
 +   filter(Unit == "pt")
@@ -9,7 +9,7 @@ Why are there "pt" units?
 2       Distance 124.71   pt AR1_s1_27-10-1990_032.csv
 
 two dates for AR# in 1990?
-is 07 supposed to be 27 or vice versa?
+is day 07 supposed to be 27 or vice versa?
 
 distinct(dataset,
 +          site, 
@@ -24,7 +24,8 @@ distinct(dataset,
 
 Empty strings in Label?
 csvs need to have taxa added to it?
-file
+I'm guessing that one individual was labeled and then someone forgot to "extend" the labels to all measurements? 
+files:
 1  AR1_s2_30-09-2012_002.csv
 2  AR1_s5_27-10-1990_019.csv
 3  AR3_s3_30-09-2012_007.csv
@@ -41,6 +42,7 @@ file
 
 
 Why is label a number in this file?
+Is it supposed to be a taxa, or is this the "rescale" value?
 > dataset %>%
 +   filter(Label == "35.73") %>%
 +   distinct(file)

@@ -1,4 +1,16 @@
-# lambda MLE by rep
+# Arkansas data processed at Colorado Mesa University
+# Mostly by Nia Taubr
+# Other help from:
+# Andy Stack, Noah Enoch, Carly Scheck
+
+# mle tidy
+
+# `sizeSpectra` is not hosted on CRAN
+# to install the package directly from github, you need to have the `devtools` package installed. Run the following once if you don't already have it downloaded
+# install.packages("devtools") 
+
+#To install the latest version of sizeSpectra, run the following:
+# devtools::install_github("andrew-edwards/sizeSpectra")
 
 library(sizeSpectra)
 library(tidyverse)
@@ -56,40 +68,26 @@ MLE_tidy <- function(df, rsp_var){
 }
 
 # read in dry weight data
-dat <- readRDS("data/ark_dw.RDS")
+dat <- readRDS("cmu/derived_data/cmu_ark_dw.RDS")
 dat %>%
-  distinct(year) %>%
+  distinct(year) 
+
+# how many individuals by site and year?
+dat %>%
+  group_by(site, year) %>%
+  count() %>%
   arrange(year)
 
-# set years as ordered factors
-dat <- dat %>%
-  mutate(y_fact = 
-           factor(year,
-                  levels = c("1990",
-                             "1999",
-                             "2012",
-                             "2019",
-                             "2021"))) %>%
-  as_tibble()
-
+# how many individuals per sample?
 dat %>%
-  filter(dw <=0.0026)
-# 0 rows, already filtered
-
-
-# Per replicate -----------------------------------------------------------
-
-
-dat %>%
-  filter(dw >0.0026) %>%
-  group_by(site, rep, y_fact) %>%
+  group_by(site, rep, year) %>%
   count() 
 
+# plot of the count of individuals by sample
 dat %>%
-  filter(dw >0.0026) %>%
-  group_by(site, rep, y_fact) %>%
+  group_by(site, rep, year) %>%
   count() %>%
-  ggplot(aes(x = y_fact,
+  ggplot(aes(x = year,
              y = n, 
              color = site,
              shape = rep)) +
@@ -148,7 +146,7 @@ mle_lambda_rep <- mle_lambda_rep %>%
   mutate(se = (maxCI - minCI) / 2 * 1.96,
          var = se**2)
 
-summary(lm(b~site*year, dat = mle_lambda_rep, weights = var))
+summary(lm(b~site*year, dat = mle_lambda_rep, weights = 1 / var))
 ggplot(mle_lambda_rep,
        aes(x = year - mean(year),
            y = b,
@@ -157,7 +155,7 @@ ggplot(mle_lambda_rep,
            color = site)) +
   geom_pointrange() +
   geom_smooth(method = "lm", 
-              aes(weight = var))
+              aes(weight = 1/var))
 
 
 mle_lambda_rep %>%
@@ -171,9 +169,9 @@ mle_lambda_rep %>%
 
 mle_lambda_rep %>%
   group_by(site, year) %>%
-  summarize(mean_b = mean(b)) %>%
+  #summarize(mean_b = mean(b)) %>%
   mutate(year_c = year - mean(year)) %>%
-  lm(mean_b ~ site*year_c, data = .) %>%
+  lm(b ~ site*year_c, data = .) %>%
   summary()
 
 
@@ -226,74 +224,3 @@ ggsave("plots/mle_weighted_ols_Apr_2024.png",
        units = "in",
        width = 7,
        height = 6)
-
-
-# Temperature -------------------------------------------------------------
-
-# generated and downloaded from:
-# https://wcc.sc.egov.usda.gov/reportGenerator/view/customWaterYearGroupByMonthReport/annual_calendar_year/start_of_period/369:CO:SNTL%7C485:CO:SNTL%7C547:CO:SNTL%7C938:CO:SNTL%7Cid=%22%22%7Cname/1990-01-01,2024-01-01/stationId,name,TAVG::value?fitToScreen=false
-
-# 369	Brumley	CO	SNTL
-# 938	Buckskin Joe	CO	SNTL
-# 485	Fremont Pass	CO	SNTL
-# 547	Ivanhoe	CO	SNTL
-
-snotel <- read_csv("data/SNOTEL_temperature.csv", skip = 58)
-names(snotel) <- c("year", "station_id", "station_name", "mean_air_temp")
-
-# usgs gauge 07086000
-
-# generated and downloaded from:
-# https://waterdata.usgs.gov/nwis/annual?referred_module=sw&amp;site_no=07086000&amp;por_07086000_295112=344915,00010,295112,1994,2024&amp;start_dt=1994&amp;end_dt=2024&amp;year_type=W&amp;format=html_table&amp;date_format=YYYY-MM-DD&amp;rdb_compression=file&amp;submitted_form=parameter_selection_list
-usgs <- read_tsv("data/USGS_07086000_temperature.csv", skip = 34)
-# remove first row and only keep last two columns
-usgs <- usgs[-1,5:6]
-names(usgs) <- c("year", "mean_temp")
-usgs <- usgs %>%
-  mutate(mean_temp = as.numeric(mean_temp))
-
-# plots
-snotel %>%
-  ggplot(aes(x = year, y = mean_air_temp,
-             color = station_name)) +
-  geom_point() +
-  stat_smooth(method = "lm") +
-  labs(y = "Annual mean air temperature",
-       x = "Year") +
-  theme_bw()
-
-snotel %>%
-  ggplot(aes(x = year, y = mean_air_temp,
-             color = station_name)) +
-  geom_point() +
-  stat_smooth(method = "lm",
-              inherit.aes = FALSE,
-              aes(x = year, y = mean_air_temp)) +
-  labs(y = "Annual mean air temperature \U00B0 C",
-       x = "Year") +
-  theme_bw()
-ggsave("plots/snotel_temp_Apr_2024.png",
-       units = "in",
-       width = 7,
-       height = 6)
-
-usgs %>%
-  ggplot(aes(x = year, 
-             y = mean_temp)) +
-  geom_point() +
-  stat_smooth(method = "lm")+
-  labs(y = "Annual mean water temperature \U00B0 C",
-       x = "Year") +
-  theme_bw()
-ggsave("plots/usgs_temp_Apr_2024.png",
-       units = "in",
-       width = 7,
-       height = 6)
-
-# lm stats
-summary(lm(mean_air_temp ~ year, data = snotel))
-# average air temp across snotel sites increasing by:
-# 0.17 degrees C per year
-summary(lm(mean_temp ~ year, data = usgs))
-# average water temperature at usgs gauge downstream increasing by:
-# 0.033 degrees per year. 

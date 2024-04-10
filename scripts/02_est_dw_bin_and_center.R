@@ -23,7 +23,6 @@ no_coef
 # Psychodidae --> Empididae
 # Uenoidae --> Limnephilidae
 # Hydroptilidae --> Rhyacophilidae
-
 # Pediciidae --> Tipulidae
 dat$Label <- gsub(
   pattern = "Psychodidae",
