@@ -106,7 +106,8 @@ mle_lambda_rep <- dat %>%
                       "dw")) %>%
   unnest(cols = lambda) %>%
   select(-data) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(year_0 = year - min(year))
 
 
 mle_lambda_rep %>%
@@ -117,16 +118,27 @@ mle_lambda_rep %>%
              color = site, 
              group = rep)) +
   geom_pointrange(
-    position = position_dodge(width = 1)
+    size = 1,
+    position = position_dodge(width = 0.75)
   ) +
   scale_color_manual(values = c("#019AFF", "#FF1984")) +
-  # stat_smooth(method = "lm", 
-  #             inherit.aes = FALSE,
-  #             aes(x = year, y = b, color = site)) +
+  scale_fill_manual(values = c("#019AFF", "#FF1984")) +
+  stat_smooth(method = "lm",
+              inherit.aes = FALSE,
+              aes(x = year, y = b,
+                  color = site,
+                  fill = site),
+              alpha = 0.15) +
+  theme_bw() +
+  labs(y = "Estimated \U03BB") +
   NULL
+ggsave("plots/cmu_showcase_mle.png",
+       units = "in",
+       width = 8,
+       height = 6)
 
 
-ols <- lm(b~site*year, dat = mle_lambda_rep)
+ols <- lm(b~site*year_0, dat = mle_lambda_rep)
 summary(ols)
 ggplot(ols,
        aes(x = .fitted,
@@ -146,16 +158,16 @@ mle_lambda_rep <- mle_lambda_rep %>%
   mutate(se = (maxCI - minCI) / 2 * 1.96,
          var = se**2)
 
-summary(lm(b~site*year, dat = mle_lambda_rep, weights = 1 / var))
+summary(lm(b~site*year_0, dat = mle_lambda_rep, weights = 1 / var))
+
 ggplot(mle_lambda_rep,
-       aes(x = year - mean(year),
+       aes(x = year_0,
            y = b,
            ymin = minCI,
            ymax = maxCI,
            color = site)) +
   geom_pointrange() +
-  geom_smooth(method = "lm", 
-              aes(weight = 1/var))
+  geom_smooth(method = "lm")
 
 
 mle_lambda_rep %>%
@@ -168,7 +180,7 @@ mle_lambda_rep %>%
   geom_smooth(method = "lm")
 
 mle_lambda_rep %>%
-  group_by(site, year) %>%
+  #group_by(site, year) %>%
   #summarize(mean_b = mean(b)) %>%
   mutate(year_c = year - mean(year)) %>%
   lm(b ~ site*year_c, data = .) %>%
@@ -215,7 +227,7 @@ ggplot(mle_lambda,
   geom_pointrange() +
   scale_color_manual(values = c("#019AFF", "#FF1984")) +
   geom_smooth(method = "lm", 
-              aes(weight = var),
+              aes(weight = 1/var),
               alpha = 0.15) +
   labs(y = "Estimated \U03BB",
        x = "Year") +

@@ -217,7 +217,7 @@ ggplot(mle_lambda,
   geom_pointrange() +
   scale_color_manual(values = c("#019AFF", "#FF1984")) +
   geom_smooth(method = "lm", 
-              aes(weight = var),
+              aes(weight = 1/var),
               alpha = 0.15) +
   labs(y = "Estimated \U03BB",
        x = "Year") +
@@ -226,6 +226,21 @@ ggsave("plots/mle_weighted_ols_Apr_2024.png",
        units = "in",
        width = 7,
        height = 6)
+
+
+ggplot(mle_lambda,
+       aes(x = year,
+           y = b,
+           ymin = minCI,
+           ymax = maxCI,
+           color = site)) +
+  geom_pointrange() +
+  scale_color_manual(values = c("#019AFF", "#FF1984")) +
+  geom_smooth(alpha = 0.15) +
+  labs(y = "Estimated \U03BB",
+       x = "Year") +
+  theme_bw()
+
 
 
 # Temperature -------------------------------------------------------------

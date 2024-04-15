@@ -40,7 +40,7 @@ for (i in 1:length(meas)){
 # time for code to run?
 end_time <- Sys.time()
 end_time - start_time
-# jpz's work HP =  seconds
+# jpz's work HP =  1.8 seconds
 # hope thinkPad = 1.99 seconds
 
 
@@ -82,7 +82,7 @@ dataset <- dataset %>%
 distinct(dataset,
          site, 
          date)
-
+dataset %>% distinct(year, site, rep) %>% arrange(year, site)
 # label typos ####
 sort(unique(dataset$Label))
 # lots of typos to fix
@@ -168,6 +168,10 @@ dat_clean <- dataset %>%
     Label == "Water mites"  ~ "Acari",
     .default = Label
   )) 
+
+dat_clean %>%
+  filter(Label == "Non-insects")
+
 
 # read in csv with length weight equations
 lw_coef <- read.csv("data/LW_coeffs.csv")
